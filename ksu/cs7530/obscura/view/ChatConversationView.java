@@ -1,6 +1,7 @@
 package ksu.cs7530.obscura.view;
 
 import ksu.cs7530.obscura.controller.ChatController;
+import ksu.cs7530.obscura.model.User;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -10,7 +11,7 @@ import java.awt.event.KeyEvent;
 
 public class ChatConversationView {
 
-
+    private User localUser;
     private JTextArea textArea1;
     private JTextField textField1;
     private JButton quitButton;
@@ -19,8 +20,9 @@ public class ChatConversationView {
     private JButton loadPrivateReadKeyButton;
     JPanel mainPanel;
 
-public ChatConversationView(String securityMode) {
+public ChatConversationView(User localUser, String securityMode) {
 
+    this.localUser = localUser;
 
     if(securityMode.equals(ChatController.CHAT_SECURITY_PRIVATE_KEY))
     {
@@ -74,5 +76,7 @@ public ChatConversationView(String securityMode) {
             System.out.println("Keyboard pressed from text field!");
         }
     });
+
+    ChatController.getInstance().startChatListener(localUser, textArea1);
 }
 }

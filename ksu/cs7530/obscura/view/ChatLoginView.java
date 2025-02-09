@@ -1,6 +1,7 @@
 package ksu.cs7530.obscura.view;
 
 import ksu.cs7530.obscura.controller.ChatController;
+import ksu.cs7530.obscura.model.User;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,8 +37,9 @@ public class ChatLoginView extends JFrame{
 
             System.out.println("Security selection: " + buttonGroup1.getSelection().getActionCommand());
 
-            JFrame frame = new JFrame("Chat Session");
-            frame.setContentPane(new ChatConversationView(buttonGroup1.getSelection().getActionCommand()).mainPanel); // Use the main panel
+            JFrame frame = new JFrame("ObscuraChat - Conversation");
+            frame.setContentPane(new ChatConversationView(new User(nameField.getText()),
+                    buttonGroup1.getSelection().getActionCommand()).mainPanel);
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.pack();
             frame.setVisible(true);
@@ -59,7 +61,7 @@ public class ChatLoginView extends JFrame{
     });
 }
     public static void main(String[] args) {
-        JFrame frame = new JFrame("My Swing Application");
+        JFrame frame = new JFrame("ObscuraChat - Login");
         frame.setContentPane(new ChatLoginView().mainPanel); // Use the main panel
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.pack();

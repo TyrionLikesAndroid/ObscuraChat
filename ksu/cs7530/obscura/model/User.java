@@ -7,6 +7,10 @@ public class User {
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public String toString() {
         return "User{" +
                 "name='" + name + '\'' +
