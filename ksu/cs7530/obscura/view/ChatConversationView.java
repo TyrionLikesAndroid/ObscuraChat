@@ -44,6 +44,7 @@ public ChatConversationView(User localUser, String securityMode) {
                 frame.dispose();
             }
 
+            ChatController.getInstance().close();
         }
     });
     sendButton.addActionListener(new ActionListener() {

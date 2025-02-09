@@ -15,6 +15,7 @@ public class ChatController implements Runnable {
     static public String CHAT_SECURITY_PRIVATE_KEY = "PRIVATE_KEY";
     static public String CHAT_SECURITY_PUBLIC_KEY = "PUBLIC_KEY";
     JTextArea textOutput;
+    ServerSocket serverSocket;
 
     static private ChatController instance;
     static public ChatController getInstance()
@@ -42,31 +43,47 @@ public class ChatController implements Runnable {
         }
     }
 
+    public void close()
+    {
+        try
+        {
+            serverSocket.close();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     public void run()
     {
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+        try
+        {
+            serverSocket = new ServerSocket(PORT);
             System.out.println("Server started, waiting for connection...");
 
-            // Accept client connection
-            try (Socket clientSocket = serverSocket.accept()) {
-                System.out.println("Client connected: " + clientSocket.getInetAddress());
+            while(true)
+            {
+                // Accept client connection
+                try (Socket clientSocket = serverSocket.accept()) {
+                    System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-                // Get input stream (to receive messages from client)
-                BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                // Get output stream (to send messages to client)
-                PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
+                    // Get input stream (to receive messages from client)
+                    BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    // Get output stream (to send messages to client)
+                    PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
 
-                String message;
-                // Read messages from the client
-                while ((message = input.readLine()) != null) {
-                    textOutput.append("\n" + message);
-                    output.println("Server received: " + message);
+                    String message;
+                    // Read messages from the client
+                    while ((message = input.readLine()) != null) {
+                        textOutput.append("\n" + message);
+                        output.println("Server received: " + message);
+                    }
                 }
-
                 System.out.println("Fallen out of read loop");
             }
         } catch (IOException e) {
-            System.err.println("Error: " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
