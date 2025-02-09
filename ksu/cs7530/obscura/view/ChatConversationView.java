@@ -51,7 +51,6 @@ public ChatConversationView(User localUser, String securityMode) {
         public void actionPerformed(ActionEvent e) {
 
             System.out.println("Send message pressed!");
-
         }
     });
     loadPublicWriteKeyButton.addActionListener(new ActionListener() {
