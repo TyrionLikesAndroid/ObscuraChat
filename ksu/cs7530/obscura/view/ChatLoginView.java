@@ -1,5 +1,7 @@
 package ksu.cs7530.obscura.view;
 
+import ksu.cs7530.obscura.controller.ChatController;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,9 +22,9 @@ public class ChatLoginView extends JFrame{
     public ChatLoginView() {
 
         System.out.println("Executed the constructor");
-        insecurePlaintextRadioButton.setActionCommand("PLAIN");
-        securePrivateKey3DESRadioButton.setActionCommand("3DES");
-        securePublicKeyRSARadioButton.setActionCommand("RSA");
+        insecurePlaintextRadioButton.setActionCommand(ChatController.CHAT_SECURITY_PLAIN);
+        securePrivateKey3DESRadioButton.setActionCommand(ChatController.CHAT_SECURITY_PRIVATE_KEY);
+        securePublicKeyRSARadioButton.setActionCommand(ChatController.CHAT_SECURITY_PUBLIC_KEY);
 
     startChatSessionButton.addActionListener(new ActionListener() {
         @Override
@@ -33,6 +35,14 @@ public class ChatLoginView extends JFrame{
             System.out.println("Password: " + new String(passwordField.getPassword()));
 
             System.out.println("Security selection: " + buttonGroup1.getSelection().getActionCommand());
+
+            JFrame frame = new JFrame("Chat Session");
+            frame.setContentPane(new ChatConversationView(buttonGroup1.getSelection().getActionCommand()).mainPanel); // Use the main panel
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.pack();
+            frame.setVisible(true);
+
+            closeButton.doClick();
         }
     });
 
