@@ -20,7 +20,7 @@ public class ChatConversationView {
     private JButton loadPrivateReadKeyButton;
     JPanel mainPanel;
 
-public ChatConversationView(User localUser, String securityMode) {
+public ChatConversationView(User localUser, String securityMode, String ipAddress, boolean startAsListener) {
 
     this.localUser = localUser;
 
@@ -52,6 +52,9 @@ public ChatConversationView(User localUser, String securityMode) {
         public void actionPerformed(ActionEvent e) {
 
             System.out.println("Send message pressed!");
+            textArea1.append("\nLOCAL: " + textField1.getText());
+            ChatController.getInstance().sendMessage(textField1.getText());
+            textField1.setText("");
         }
     });
     loadPublicWriteKeyButton.addActionListener(new ActionListener() {
@@ -77,6 +80,9 @@ public ChatConversationView(User localUser, String securityMode) {
         }
     });
 
-    ChatController.getInstance().startChatListener(localUser, textArea1);
+    if(startAsListener)
+        ChatController.getInstance().startChatListener(localUser, textArea1);
+    else
+        ChatController.getInstance().startChatWithAddress(localUser, textArea1, ipAddress);
 }
 }

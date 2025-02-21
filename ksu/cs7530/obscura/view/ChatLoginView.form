@@ -13,14 +13,6 @@
           <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </hspacer>
-      <component id="1329d" class="javax.swing.JButton" binding="startChatSessionButton" default-binding="true">
-        <constraints>
-          <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Start Chat Session"/>
-        </properties>
-      </component>
       <component id="da43c" class="javax.swing.JButton" binding="closeButton">
         <constraints>
           <grid row="4" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
@@ -116,6 +108,22 @@
           </grid>
         </constraints>
         <properties/>
+      </component>
+      <component id="2dcf3" class="javax.swing.JButton" binding="joinChatButton" default-binding="true">
+        <constraints>
+          <grid row="3" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Join Chat"/>
+        </properties>
+      </component>
+      <component id="1329d" class="javax.swing.JButton" binding="startChatSessionButton" default-binding="true">
+        <constraints>
+          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Start Chat"/>
+        </properties>
       </component>
     </children>
   </grid>

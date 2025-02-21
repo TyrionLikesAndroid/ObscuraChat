@@ -16,6 +16,10 @@ public class ChatController implements Runnable {
     static public String CHAT_SECURITY_PUBLIC_KEY = "PUBLIC_KEY";
     JTextArea textOutput;
     ServerSocket serverSocket;
+    Socket clientSocket;
+    boolean startAsListener;
+    String remoteIpAddress;
+    PrintWriter output;
 
     static private ChatController instance;
     static public ChatController getInstance()
@@ -33,13 +37,31 @@ public class ChatController implements Runnable {
 
     public void startChatListener(User aUser, JTextArea textPane) {
 
+        startAsListener = true;
         textOutput = textPane;
         InetAddress localIP = ChatController.getLocalIPAddress();
         if (localIP != null)
         {
-            textOutput.append("Starting listener for " + aUser.getName() + " on " + localIP.getHostAddress() +
-                    "/" + PORT);
+            textOutput.append("Starting listener for " + aUser.getName() + " on " + localIP.getHostAddress());
             new Thread(instance).start();
+        }
+    }
+
+    public void startChatWithAddress(User aUser, JTextArea textPane, String ipAddress) {
+
+        startAsListener = false;
+        remoteIpAddress = ipAddress;
+
+        textOutput = textPane;
+        textOutput.append("Connecting to existing session on " + ipAddress);
+        new Thread(instance).start();
+    }
+
+    public void sendMessage(String message) {
+
+        if(output != null) {
+            System.out.println("Sending message: " + message);
+            output.println(message);
         }
     }
 
@@ -47,7 +69,11 @@ public class ChatController implements Runnable {
     {
         try
         {
-            serverSocket.close();
+            if(serverSocket != null)
+                serverSocket.close();
+
+            if(clientSocket != null)
+                clientSocket.close();
         }
         catch(Exception e)
         {
@@ -59,29 +85,52 @@ public class ChatController implements Runnable {
     {
         try
         {
-            serverSocket = new ServerSocket(PORT);
-            System.out.println("Server started, waiting for connection...");
+            if(startAsListener) {
+                serverSocket = new ServerSocket(PORT);
+                System.out.println("Server started, waiting for connection...");
 
-            while(true)
-            {
-                // Accept client connection
-                try (Socket clientSocket = serverSocket.accept()) {
-                    System.out.println("Client connected: " + clientSocket.getInetAddress());
+                while (true) {
+                    // Accept client connection
+                    try (Socket clientSocket = serverSocket.accept()) {
+                        System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-                    // Get input stream (to receive messages from client)
-                    BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                    // Get output stream (to send messages to client)
-                    PrintWriter output = new PrintWriter(clientSocket.getOutputStream(), true);
+                        // Get input stream (to receive messages from client)
+                        BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                        // Get output stream (to send messages to client)
+                        output = new PrintWriter(clientSocket.getOutputStream(), true);
 
-                    String message;
-                    // Read messages from the client
-                    while ((message = input.readLine()) != null) {
-                        textOutput.append("\n" + message);
-                        output.println("Server received: " + message);
+                        textOutput.append("\nRemote Connection Established");
+
+                        String message;
+                        // Read messages from the client
+                        while ((message = input.readLine()) != null) {
+                            textOutput.append("\nREMOTE: " + message);
+                        }
                     }
+                    System.out.println("Fallen out of read loop");
                 }
+            }
+            else {
+                // Try to connect to an existing listener
+                clientSocket = new Socket(remoteIpAddress, PORT);
+
+                // Get input stream (to send messages to server)
+                output = new PrintWriter(clientSocket.getOutputStream(), true);
+                // Get input stream (to receive messages from server)
+                BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+                // Send a message to the server
+                textOutput.append("\nRemote Connection Established");
+
+                // Read the server's response
+                String message;
+                while ((message = input.readLine()) != null) {
+                    textOutput.append("\nREMOTE: " + message);
+                }
+
                 System.out.println("Fallen out of read loop");
             }
+
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
         }
