@@ -43,6 +43,7 @@ public class ChatLoginView extends JFrame{
             frame.setContentPane(new ChatConversationView(new User(nameField.getText()),
                     buttonGroup1.getSelection().getActionCommand(), null,true).mainPanel);
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            frame.setResizable(false);
             frame.pack();
             frame.setVisible(true);
 
@@ -105,6 +106,7 @@ public class ChatLoginView extends JFrame{
                 frame.setContentPane(new ChatConversationView(new User(nameField.getText()),
                         buttonGroup1.getSelection().getActionCommand(), text,false).mainPanel);
                 frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.setResizable(false);
                 frame.pack();
                 frame.setVisible(true);
 
