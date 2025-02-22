@@ -128,6 +128,7 @@ public class ChatLoginView extends JFrame{
         JFrame frame = new JFrame("ObscuraChat - Login");
         frame.setContentPane(new ChatLoginView().mainPanel); // Use the main panel
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setResizable(false);
         frame.pack();
         frame.setVisible(true);
     }
