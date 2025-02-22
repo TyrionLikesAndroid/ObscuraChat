@@ -1,27 +1,27 @@
 package ksu.cs7530.obscura.controller;
 
+import ksu.cs7530.obscura.model.ChatListener;
 import ksu.cs7530.obscura.model.User;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.*;
 import java.util.Enumeration;
 
 public class ChatController implements Runnable {
 
-    private static final int PORT = 12345; // Example port
-
+    static private ChatController instance;
     static public String CHAT_SECURITY_PLAIN = "PLAIN";
     static public String CHAT_SECURITY_PRIVATE_KEY = "PRIVATE_KEY";
     static public String CHAT_SECURITY_PUBLIC_KEY = "PUBLIC_KEY";
-    JTextArea textOutput;
-    ServerSocket serverSocket;
-    Socket clientSocket;
-    boolean startAsListener;
-    String remoteIpAddress;
-    PrintWriter output;
+    static private final int PORT = 53737;
 
-    static private ChatController instance;
+    private ServerSocket serverSocket;
+    private Socket clientSocket;
+    private String remoteIpAddress = null;
+    private PrintWriter output;
+    private BufferedReader input;
+    private ChatListener chatListener;
+
     static public ChatController getInstance()
     {
         if(instance == null)
@@ -35,25 +35,25 @@ public class ChatController implements Runnable {
         System.out.println("Singleton instance of ChatController created");
     }
 
-    public void startChatListener(User aUser, JTextArea textPane) {
+    public void startChatSession(User aUser, ChatListener aListener) {
 
-        startAsListener = true;
-        textOutput = textPane;
+        chatListener = aListener;
+
         InetAddress localIP = ChatController.getLocalIPAddress();
         if (localIP != null)
         {
-            textOutput.append("Starting listener for " + aUser.getName() + " on " + localIP.getHostAddress());
-            new Thread(instance).start();
+            chatListener.chatMessageReceived(User.SYSTEM,
+                    "Starting listener for " + aUser.getName() + " on " + localIP.getHostAddress());
+           new Thread(instance).start();
         }
     }
 
-    public void startChatWithAddress(User aUser, JTextArea textPane, String ipAddress) {
+    public void joinChatSession(User aUser, ChatListener aListener, String ipAddress) {
 
-        startAsListener = false;
         remoteIpAddress = ipAddress;
 
-        textOutput = textPane;
-        textOutput.append("Connecting to existing session on " + ipAddress);
+        chatListener = aListener;
+        chatListener.chatMessageReceived(User.SYSTEM, "Connecting to existing session on " + ipAddress);
         new Thread(instance).start();
     }
 
@@ -83,56 +83,75 @@ public class ChatController implements Runnable {
 
     public void run()
     {
-        try
+        if(remoteIpAddress == null)
         {
-            if(startAsListener) {
+            try
+            {
                 serverSocket = new ServerSocket(PORT);
                 System.out.println("Server started, waiting for connection...");
 
-                while (true) {
+                while (true)
+                {
                     // Accept client connection
-                    try (Socket clientSocket = serverSocket.accept()) {
-                        System.out.println("Client connected: " + clientSocket.getInetAddress());
+                    Socket clientSocket = serverSocket.accept();
+                    System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-                        // Get input stream (to receive messages from client)
-                        BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                        // Get output stream (to send messages to client)
-                        output = new PrintWriter(clientSocket.getOutputStream(), true);
+                    // Get input stream (to receive messages from client)
+                    input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    // Get output stream (to send messages to client)
+                    output = new PrintWriter(clientSocket.getOutputStream(), true);
 
-                        textOutput.append("\nRemote Connection Established");
+                    // Echo to listener that a remote connection has been established
+                    chatListener.chatMessageReceived(User.SYSTEM, "Remote Connection Established");
 
-                        String message;
-                        // Read messages from the client
-                        while ((message = input.readLine()) != null) {
-                            textOutput.append("\nREMOTE: " + message);
-                        }
-                    }
-                    System.out.println("Fallen out of read loop");
+                    readMessageLoop();
                 }
             }
-            else {
+            catch (IOException ioException)
+            {
+                System.out.println("IOException caught in start connection loop: " + ioException.toString());
+            }
+        }
+        else
+        {
+            try
+            {
                 // Try to connect to an existing listener
                 clientSocket = new Socket(remoteIpAddress, PORT);
 
                 // Get input stream (to send messages to server)
                 output = new PrintWriter(clientSocket.getOutputStream(), true);
                 // Get input stream (to receive messages from server)
-                BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
                 // Send a message to the server
-                textOutput.append("\nRemote Connection Established");
+                chatListener.chatMessageReceived(User.SYSTEM, "Remote Connection Established");
 
-                // Read the server's response
-                String message;
-                while ((message = input.readLine()) != null) {
-                    textOutput.append("\nREMOTE: " + message);
-                }
+                readMessageLoop();
+            }
+            catch (IOException ioException)
+            {
+                System.out.println("IOException caught in join connection loop: " + ioException.toString());
+            }
+        }
+    }
 
-                System.out.println("Fallen out of read loop");
+    private void readMessageLoop()
+    {
+        try
+        {
+            // Read messages from the client constantly until the connection is dropped
+            String message;
+            while ((message = input.readLine()) != null)
+            {
+                chatListener.chatMessageReceived(new User("REMOTE"), message);
             }
 
-        } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Fallen out of read message loop");
+        }
+        catch (IOException ioException)
+        {
+            System.out.println("IOException caught in read loop: " + ioException.toString());
         }
     }
 
@@ -141,25 +160,28 @@ public class ChatController implements Runnable {
         try
         {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
+            while (interfaces.hasMoreElements())
+            {
                 NetworkInterface iface = interfaces.nextElement();
                 // We want an interface that is up, not loopback, and has an IP address.
-                if (iface.isUp() && !iface.isLoopback() && iface.getInetAddresses().hasMoreElements()) {
+                if (iface.isUp() && !iface.isLoopback() && iface.getInetAddresses().hasMoreElements())
+                {
                     Enumeration<InetAddress> addresses = iface.getInetAddresses();
-                    while (addresses.hasMoreElements()) {
+                    while (addresses.hasMoreElements())
+                    {
                         InetAddress addr = addresses.nextElement();
-                        // Prefer IPv4 addresses (IPv6 can be complex)
-                        if (addr instanceof java.net.Inet4Address) {
+                        if (addr instanceof java.net.Inet4Address)
+                        {
                             return addr;  // Found a suitable address
                         }
                     }
                 }
             }
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             e.printStackTrace();
         }
         return null; // Could not find a suitable address
     }
-
 }

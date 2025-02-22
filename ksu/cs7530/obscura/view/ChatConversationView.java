@@ -1,6 +1,7 @@
 package ksu.cs7530.obscura.view;
 
 import ksu.cs7530.obscura.controller.ChatController;
+import ksu.cs7530.obscura.model.ChatListener;
 import ksu.cs7530.obscura.model.User;
 
 import javax.swing.*;
@@ -9,7 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class ChatConversationView {
+public class ChatConversationView implements ChatListener {
 
     private User localUser;
     private JTextArea textArea1;
@@ -50,11 +51,7 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
     sendButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-
-            System.out.println("Send message pressed!");
-            textArea1.append("\nLOCAL: " + textField1.getText());
-            ChatController.getInstance().sendMessage(textField1.getText());
-            textField1.setText("");
+            processLocalChatInput();
         }
     });
     loadPublicWriteKeyButton.addActionListener(new ActionListener() {
@@ -77,12 +74,35 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
             super.keyPressed(e);
 
             System.out.println("Keyboard pressed from text field!");
+            if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                processLocalChatInput();
         }
     });
 
     if(startAsListener)
-        ChatController.getInstance().startChatListener(localUser, textArea1);
+        ChatController.getInstance().startChatSession(localUser, this);
     else
-        ChatController.getInstance().startChatWithAddress(localUser, textArea1, ipAddress);
+        ChatController.getInstance().joinChatSession(localUser, this, ipAddress);
 }
+
+    public void chatMessageReceived(User aUser, String message)
+    {
+        System.out.println("Received chat message event");
+        textArea1.append("User[" + aUser.getName() + "]: " + message + "\n");
+    }
+    public void chatSessionEnded(User aUser)
+    {
+        System.out.println("Received session ended event");
+    }
+
+    private void processLocalChatInput()
+    {
+        if(! textField1.getText().isEmpty())
+        {
+            System.out.println("Send message to remote user");
+            textArea1.append("User[" + localUser.getName() + "]: " + textField1.getText() + "\n");
+            ChatController.getInstance().sendMessage(textField1.getText());
+            textField1.setText("");
+        }
+    }
 }
