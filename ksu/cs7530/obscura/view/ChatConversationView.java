@@ -5,10 +5,12 @@ import ksu.cs7530.obscura.model.ChatListener;
 import ksu.cs7530.obscura.model.User;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.Semaphore;
 
 public class ChatConversationView implements ChatListener {
 
@@ -20,6 +22,8 @@ public class ChatConversationView implements ChatListener {
     private JButton loadPublicWriteKeyButton;
     private JButton loadPrivateReadKeyButton;
     JPanel mainPanel;
+    Semaphore verifySemaphore = new Semaphore(0);
+    boolean verifyResult = false;
 
 public ChatConversationView(User localUser, String securityMode, String ipAddress, boolean startAsListener) {
 
@@ -34,6 +38,9 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
         loadPublicWriteKeyButton.setVisible(false);
         loadPrivateReadKeyButton.setVisible(false);
     }
+
+    textField1.setEnabled(false);
+    sendButton.setEnabled(false);
 
     quitButton.addActionListener(new ActionListener() {
         @Override
@@ -80,19 +87,33 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
     });
 
     if(startAsListener)
-        ChatController.getInstance().startChatSession(localUser, this);
+        ChatController.getInstance().startChatSession(localUser, this, securityMode);
     else
-        ChatController.getInstance().joinChatSession(localUser, this, ipAddress);
+        ChatController.getInstance().joinChatSession(localUser, this, ipAddress, securityMode);
 }
 
     public void chatMessageReceived(User aUser, String message)
     {
         System.out.println("Received chat message event");
-        textArea1.append("User[" + aUser.getName() + "]: " + message + "\n");
+        textArea1.append("User[" + aUser.getName() + "]:  " + message + "\n");
     }
     public void chatSessionEnded(User aUser)
     {
         System.out.println("Received session ended event");
+    }
+
+    public boolean confirmChatSession(User aUser)
+    {
+        System.out.println("Confirm chat session with user = " + aUser.getName());
+
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(quitButton);
+        if (frame != null)
+        {
+            createAndShowModalDialog(frame, aUser);
+        }
+
+        try { verifySemaphore.acquire(); } catch (Exception e) { e.printStackTrace(); }
+        return verifyResult;
     }
 
     private void processLocalChatInput()
@@ -104,5 +125,53 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
             ChatController.getInstance().sendMessage(textField1.getText());
             textField1.setText("");
         }
+    }
+
+    private void createAndShowModalDialog(JFrame parent, User aUser) {
+        JDialog dialog = new JDialog(parent, "Verify Connection", true); // true makes it modal
+        dialog.setLayout(new BorderLayout());
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.add(new JLabel("Chat with User = " + aUser.getName()));
+        dialog.add(inputPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        JButton okButton = new JButton("Accept");
+        JButton cancelButton = new JButton("Reject");
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                dialog.dispose(); // Close the dialog
+
+                verifyResult = true;
+                verifySemaphore.release();
+
+                parent.setTitle("ObscuraChat - Conversation (" + aUser.getName() + ")");
+                textField1.setEnabled(true);
+                sendButton.setEnabled(true);
+                chatMessageReceived(User.SYSTEM, "Accepted ObscuraChat With: " + aUser.getName());
+            }
+        });
+
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                dialog.dispose(); // Close the dialog
+                verifyResult = false;
+                verifySemaphore.release();
+
+                chatMessageReceived(User.SYSTEM, "Rejected ObscuraChat With: " + aUser.getName());
+            }
+        });
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(parent); // Center relative to the parent frame
+        dialog.setVisible(true);
     }
 }

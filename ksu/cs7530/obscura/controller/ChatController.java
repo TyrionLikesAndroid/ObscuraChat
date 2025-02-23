@@ -6,6 +6,8 @@ import ksu.cs7530.obscura.model.User;
 import java.io.*;
 import java.net.*;
 import java.util.Enumeration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChatController implements Runnable {
 
@@ -13,6 +15,7 @@ public class ChatController implements Runnable {
     static public String CHAT_SECURITY_PLAIN = "PLAIN";
     static public String CHAT_SECURITY_PRIVATE_KEY = "PRIVATE_KEY";
     static public String CHAT_SECURITY_PUBLIC_KEY = "PUBLIC_KEY";
+    static public String CHAT_TAG = "<OBSCURA_CHAT>";
     static private final int PORT = 53737;
 
     private ServerSocket serverSocket;
@@ -21,6 +24,9 @@ public class ChatController implements Runnable {
     private PrintWriter output;
     private BufferedReader input;
     private ChatListener chatListener;
+    private User localUser;
+    private User remoteUser;
+    private String securityMode;
 
     static public ChatController getInstance()
     {
@@ -35,9 +41,11 @@ public class ChatController implements Runnable {
         System.out.println("Singleton instance of ChatController created");
     }
 
-    public void startChatSession(User aUser, ChatListener aListener) {
+    public void startChatSession(User aUser, ChatListener aListener, String mode) {
 
         chatListener = aListener;
+        localUser = aUser;
+        securityMode = mode;
 
         InetAddress localIP = ChatController.getLocalIPAddress();
         if (localIP != null)
@@ -48,9 +56,11 @@ public class ChatController implements Runnable {
         }
     }
 
-    public void joinChatSession(User aUser, ChatListener aListener, String ipAddress) {
+    public void joinChatSession(User aUser, ChatListener aListener, String ipAddress, String mode) {
 
         remoteIpAddress = ipAddress;
+        localUser = aUser;
+        securityMode = mode;
 
         chatListener = aListener;
         chatListener.chatMessageReceived(User.SYSTEM, "Connecting to existing session on " + ipAddress);
@@ -104,6 +114,9 @@ public class ChatController implements Runnable {
                     // Echo to listener that a remote connection has been established
                     chatListener.chatMessageReceived(User.SYSTEM, "Remote Connection Established");
 
+                    if(! verifyRemoteConnection())
+                        continue;
+
                     readMessageLoop();
                 }
             }
@@ -127,6 +140,14 @@ public class ChatController implements Runnable {
                 // Send a message to the server
                 chatListener.chatMessageReceived(User.SYSTEM, "Remote Connection Established");
 
+                if(! verifyRemoteConnection())
+                {
+                    input.close();
+                    output.close();
+                    clientSocket.close();
+                    return;
+                }
+
                 readMessageLoop();
             }
             catch (IOException ioException)
@@ -144,7 +165,7 @@ public class ChatController implements Runnable {
             String message;
             while ((message = input.readLine()) != null)
             {
-                chatListener.chatMessageReceived(new User("REMOTE"), message);
+                chatListener.chatMessageReceived(remoteUser, message);
             }
 
             System.out.println("Fallen out of read message loop");
@@ -153,6 +174,37 @@ public class ChatController implements Runnable {
         {
             System.out.println("IOException caught in read loop: " + ioException.toString());
         }
+    }
+
+    private boolean verifyRemoteConnection()
+    {
+        boolean out = false;
+
+        try
+        {
+            // Send the verification handshake
+            sendMessage(CHAT_TAG + localUser.getName() + "," + securityMode + CHAT_TAG);
+
+            // Wait on the verification response - THIS IS A BLOCKING CALL
+            String message = input.readLine();
+
+            // Confirm that the protocol is correct for an ObscuraChat client
+            Pattern pattern = Pattern.compile(CHAT_TAG + "[a-zA-Z]+,[a-zA-Z]+" + CHAT_TAG);
+            Matcher matcher = pattern.matcher(message);
+            if(matcher.matches())
+            {
+                int startIndex = CHAT_TAG.length();
+                int endIndex = message.indexOf(",");
+                remoteUser = new User(message.substring(startIndex,endIndex));
+                return chatListener.confirmChatSession(remoteUser);
+            }
+        }
+        catch (IOException ioException)
+        {
+            System.out.println("IOException caught in verifyRemoteConnection: " + ioException.toString());
+        }
+
+        return out;
     }
 
     public static InetAddress getLocalIPAddress()
