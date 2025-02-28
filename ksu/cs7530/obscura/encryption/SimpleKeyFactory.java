@@ -1,0 +1,22 @@
+package ksu.cs7530.obscura.encryption;
+
+public class SimpleKeyFactory implements KeyFactory{
+
+    public long[] createKeySchedule(long key)
+    {
+        long[] keySchedule = new long[16];
+        long root = key;
+
+        for(int i = 0; i < 16; i++)
+        {
+            System.out.println("Schedule loop[" + i + "] input = " + Long.toBinaryString(root));
+            long newKey = root << 1;
+            keySchedule[i] = newKey;
+            root = newKey;
+            System.out.println("Schedule loop[" + i + "] output = " + Long.toBinaryString(newKey));
+
+        }
+
+        return keySchedule;
+    }
+}
