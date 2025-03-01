@@ -13,6 +13,19 @@ public class FeistelDecryptRound {
 
     long transform(long input)
     {
-        return input;
+        int chunkRE0 = (int) (input & 4294967295L);
+        int chunkLE0 = (int) (input >> 32L);
+
+        //System.out.println("LE0: " + Long.toBinaryString(chunkLE0) + " RE0: " + Long.toBinaryString(chunkRE0));
+
+        int chunkRE0AfterF = function.transform(chunkRE0, roundKey);
+        int chunkRE0AfterFAfterXor = chunkLE0 ^ chunkRE0AfterF;
+
+        long output = ((long) chunkRE0) << 32L;
+        output = output | chunkRE0AfterFAfterXor;
+
+        //System.out.println("Decrypt transform output: " + Long.toBinaryString(output));
+
+        return output;
     }
 }
