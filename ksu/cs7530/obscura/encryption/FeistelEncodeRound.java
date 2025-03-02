@@ -1,11 +1,11 @@
 package ksu.cs7530.obscura.encryption;
 
-public class FeistelEncryptRound {
+public class FeistelEncodeRound {
 
-    private long roundKey;
-    private FeistelFFunction function;
+    private final long roundKey;
+    private final FeistelFFunction function;
 
-    FeistelEncryptRound(long key, FeistelFFunction function)
+    FeistelEncodeRound(long key, FeistelFFunction function)
     {
         this.roundKey = key;
         this.function = function;
