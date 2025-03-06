@@ -23,7 +23,7 @@ public class DESKeyFactory implements KeyFactory {
     {
         //System.out.println("DES Key Input = " + hexKey);
 
-        String binaryKey = PrivateKeyCryptosystem.hexStringToBinary(hexKey);
+        String binaryKey = hexStringToBinary(hexKey);
         //System.out.println("Binary Conversion = " + binaryKey);
 
         // Perform the PC1 permutation on the original string form.
@@ -66,7 +66,7 @@ public class DESKeyFactory implements KeyFactory {
             // Pad any zeros that might be needed to get us to 28 bits per side
             joinCWithDRaw = padZeroToFit28(Long.toBinaryString(cArray[i])) +
                     padZeroToFit28(Long.toBinaryString(dArray[i]));
-            System.out.println("Joined C+D = " + joinCWithDRaw);
+            //System.out.println("Joined C+D = " + joinCWithDRaw);
 
             // Perform the PC2 permutation on the joined string
             char[] binaryAfterPC2Str = new char[48];
@@ -76,7 +76,7 @@ public class DESKeyFactory implements KeyFactory {
             // Convert it back to a long
             long binaryAfterPC2Num = Long.parseLong(new String(binaryAfterPC2Str), 2);
             keySchedule[i] = binaryAfterPC2Num;
-            System.out.println("K[" + i + "] = " + Long.toBinaryString(binaryAfterPC2Num));
+            //System.out.println("K[" + i + "] = " + Long.toBinaryString(binaryAfterPC2Num));
         }
 
         return keySchedule;
@@ -116,5 +116,37 @@ public class DESKeyFactory implements KeyFactory {
             output.insert(0, "0");
 
         return output.toString();
+    }
+
+    public String hexStringToBinary(String hexString)
+    {
+        if (hexString == null || hexString.isEmpty())
+        {
+            return "Invalid hexadecimal string";
+        }
+
+        try {
+            // Remove prefix if present
+            if (hexString.startsWith("0x") || hexString.startsWith("0X"))
+            {
+                hexString = hexString.substring(2);
+            }
+
+            StringBuilder binaryString = new StringBuilder();
+            for (int i = 0; i < hexString.length(); i++)
+            {
+                char hexChar = hexString.charAt(i);
+                int decimal = Integer.parseInt(String.valueOf(hexChar), 16);
+                String binary = Integer.toBinaryString(decimal);
+                // Pad with leading zeros to 4 bits
+                binaryString.append(String.format("%4s", binary).replace(' ', '0'));
+            }
+            return binaryString.toString();
+
+        }
+        catch (NumberFormatException e)
+        {
+            return "Invalid hexadecimal string";
+        }
     }
 }

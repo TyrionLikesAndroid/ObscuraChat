@@ -9,11 +9,11 @@ public class SimpleKeyFactory implements KeyFactory{
 
         for(int i = 0; i < 16; i++)
         {
-            System.out.println("Schedule loop[" + i + "] input = " + Long.toBinaryString(root));
+            //System.out.println("Schedule loop[" + i + "] input = " + Long.toBinaryString(root));
             long newKey = root << 1;
             keySchedule[i] = newKey;
             root = newKey;
-            System.out.println("Schedule loop[" + i + "] output = " + Long.toBinaryString(newKey));
+            //System.out.println("Schedule loop[" + i + "] output = " + Long.toBinaryString(newKey));
         }
 
         return keySchedule;

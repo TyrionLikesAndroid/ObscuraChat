@@ -1,5 +1,7 @@
 package ksu.cs7530.obscura.encryption;
 
+import java.math.BigInteger;
+
 public class FeistelEncodeRound {
 
     private final long roundKey;
@@ -11,10 +13,10 @@ public class FeistelEncodeRound {
         this.function = function;
     }
 
-    long transform(long input)
+    BigInteger transform(BigInteger input)
     {
-        int chunkRE0 = (int) (input & 4294967295L);
-        int chunkLE0 = (int) (input >> 32L);
+        int chunkRE0 = input.and(BigInteger.valueOf(4294967295L)).intValue();
+        int chunkLE0 = input.shiftRight(32).intValue();
 
         //System.out.println("LE0: " + Long.toBinaryString(chunkLE0) + " RE0: " + Long.toBinaryString(chunkRE0));
 
@@ -26,6 +28,6 @@ public class FeistelEncodeRound {
 
         //System.out.println("Encrypt transform output: " + Long.toBinaryString(output));
 
-        return output;
+        return BigInteger.valueOf(output);
     }
 }

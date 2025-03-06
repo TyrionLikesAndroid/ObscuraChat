@@ -1,25 +1,22 @@
 package ksu.cs7530.obscura.encryption;
 
-import ksu.cs7530.obscura.view.ChatLoginView;
+import java.math.BigInteger;
 
-import javax.swing.*;
+public class SimpleCryptosystem implements PrivateKeyCryptosystem{
 
-public class SimpleCryptosystem extends PrivateKeyCryptosystem{
+    private final FeistelCipher cipher;
 
     public SimpleCryptosystem(String hexKey)
     {
-        super(new FeistelCipher(new SimpleKeyFactory(), new SimpleFFunction(), hexKey), hexKey);
+        this.cipher = new FeistelCipher(new SimpleKeyFactory(), new SimpleFFunction(), hexKey, this);
         System.out.println("SimpleCryptosystem constructed");
     }
 
-    public String encrypt(String message)
-    {
-        return cipher.encrypt(message);
-    }
-    public String decrypt(String message)
-    {
-        return cipher.decrypt(message);
-    }
+    public String encrypt(String message) { return cipher.encrypt(message); }
+    public String decrypt(String message) { return cipher.decrypt(message); }
+
+    public BigInteger performInitialPermutation(BigInteger input) { return input; }
+    public BigInteger performFinalPermutation(BigInteger input) { return input; }
 
     public static void main(String[] args)
     {
