@@ -1,8 +1,12 @@
 package ksu.cs7530.obscura.encryption;
 
+import java.math.BigInteger;
+
 public class SimpleFFunction implements FeistelFFunction {
-    public int transform(int input, long key)
+
+    public BigInteger transform(BigInteger input, long key)
     {
-        return input / ((int) ((key % 32L) + 1));
+        int result = input.intValue() / ((int) ((key % 32L) + 1));
+        return BigInteger.valueOf(result);
     }
 }

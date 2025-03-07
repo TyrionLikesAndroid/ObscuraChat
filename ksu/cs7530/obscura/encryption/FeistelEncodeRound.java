@@ -15,19 +15,20 @@ public class FeistelEncodeRound {
 
     BigInteger transform(BigInteger input)
     {
-        int chunkRE0 = input.and(BigInteger.valueOf(4294967295L)).intValue();
-        int chunkLE0 = input.shiftRight(32).intValue();
+        System.out.println("Encode transform input = " + input.toString(2));
+        BigInteger chunkRE0 = input.and(BigInteger.valueOf(4294967295L));
+        BigInteger chunkLE0 = input.shiftRight(32);
 
-        //System.out.println("LE0: " + Long.toBinaryString(chunkLE0) + " RE0: " + Long.toBinaryString(chunkRE0));
+        System.out.println("LE0: " + chunkLE0.toString(2) + " RE0: " + chunkRE0.toString(2));
 
-        int chunkRE0AfterF = function.transform(chunkRE0, roundKey);
-        int chunkRE0AfterFAfterXor = chunkLE0 ^ chunkRE0AfterF;
+        BigInteger chunkRE0AfterF = function.transform(chunkRE0, roundKey);
+        BigInteger chunkRE0AfterFAfterXor = chunkLE0.xor(chunkRE0AfterF);
 
-        long output = ((long) chunkRE0) << 32L;
-        output = output | chunkRE0AfterFAfterXor;
+        BigInteger output = chunkRE0.shiftLeft( 32);
+        output = output.or(chunkRE0AfterFAfterXor);
 
-        //System.out.println("Encode transform output: " + Long.toBinaryString(output));
+        System.out.println("Encode transform output: " + output.toString(2));
 
-        return BigInteger.valueOf(output);
+        return output;
     }
 }

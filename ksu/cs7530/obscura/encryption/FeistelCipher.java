@@ -62,7 +62,9 @@ public class FeistelCipher {
 
                 if(counter == 7)
                 {
-                    encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
+                    BigInteger testBlock = new BigInteger("0123456789ABCDEF", 16);
+                    encodeOut.append(encryptFlag ? encryptBlock(testBlock) : decryptBlock(testBlock));
+                    //encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
                     counter = 0;
                     nextBlock = BigInteger.ZERO;
                 }

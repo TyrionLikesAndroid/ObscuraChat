@@ -26,7 +26,7 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
 
     public DESCryptosystem(String hexKey)
     {
-        this.cipher = new FeistelCipher(new DESKeyFactory(), new SimpleFFunction(), hexKey, this);
+        this.cipher = new FeistelCipher(new DESKeyFactory(), new DESFFunction(), hexKey, this);
         System.out.println("DESCryptosystem constructed");
     }
 
@@ -41,20 +41,19 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
 
     public BigInteger performInitialPermutation(BigInteger input)
     {
-        return input;
-//        System.out.println("DES initial permutation input = " + input);
-//        String binaryInput = padLeadingZerosToFit64(input.toString(2));
-//        System.out.println("Binary Conversion = " + binaryInput);
-//
-//        // Perform the initial permutation on the input that is already in binary
-//        char[] afterPermutation = new char[64];
-//        for(int i = 0; i < 64; i++)
-//            afterPermutation[i] = binaryInput.charAt(INITIAL_PERMUTATION[i] - 1);
-//
-//        String output = new String(afterPermutation);
-//        System.out.println("DES initial permutation output = " + output);
-//
-//        return new BigInteger(output, 2);
+        System.out.println("DES initial permutation input = " + input);
+        String binaryInput = padLeadingZerosToFit64(input.toString(2));
+        System.out.println("Binary Conversion = " + binaryInput);
+
+        // Perform the initial permutation on the input that is already in binary
+        char[] afterPermutation = new char[64];
+        for(int i = 0; i < 64; i++)
+            afterPermutation[i] = binaryInput.charAt(INITIAL_PERMUTATION[i] - 1);
+
+        String output = new String(afterPermutation);
+        System.out.println("DES initial permutation output = " + output);
+
+        return new BigInteger(output, 2);
     }
 
     public BigInteger performFinalPermutation(BigInteger input)
@@ -92,8 +91,8 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
         DESCryptosystem crypto = new DESCryptosystem("0123456789ABCDEF");
         //DESCryptosystem crypto = new DESCryptosystem("FFFFFFFF00000000");
 
-        //String plainText = "0123456789ABCDEF";
-        String plainText = "I pledge allegiance to the flag of the United States of America";
+        String plainText = "0123456789ABCDEF";
+        //String plainText = "I pledge allegiance to the flag of the United States of America";
         System.out.println("Original string = " + plainText);
         String encrypted = crypto.encrypt(plainText);
         System.out.println("Encrypted string = " + encrypted);
