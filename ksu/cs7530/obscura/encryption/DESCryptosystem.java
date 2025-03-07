@@ -92,7 +92,8 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
         DESCryptosystem crypto = new DESCryptosystem("0123456789ABCDEF");
         //DESCryptosystem crypto = new DESCryptosystem("FFFFFFFF00000000");
 
-        String plainText = "0123456789ABCDEF";
+        //String plainText = "0123456789ABCDEF";
+        String plainText = "I pledge allegiance to the flag of the United States of America";
         System.out.println("Original string = " + plainText);
         String encrypted = crypto.encrypt(plainText);
         System.out.println("Encrypted string = " + encrypted);

@@ -44,26 +44,27 @@ public class FeistelCipher {
         if (message == null || message.isEmpty())
             return encodeOut.toString();
 
-        IntStream encodeStream =  message.chars();
-        //encodeStream.forEach(ascii -> System.out.println(ascii + " = " + Long.toBinaryString(ascii)));
-
         int counter = 0;
-        BigInteger nextBlock = new BigInteger("0");
+        BigInteger nextBlock = BigInteger.ZERO;
+
+        IntStream encodeStream =  message.chars();
         Iterator<Integer> iter = encodeStream.iterator();
         while(iter.hasNext())
         {
-            int nextInt = iter.next();
-            if(counter < 4)
+            int nextByte = iter.next();
+            //System.out.println(nextByte + " = " + Long.toBinaryString(nextByte));
+
+            if(counter < 8)
             {
                 // Bit shift logic
-                nextBlock = nextBlock.or(BigInteger.valueOf(((long) nextInt) << ((3 - counter) * 16)));
+                nextBlock = nextBlock.or(new BigInteger(String.valueOf(nextByte)).shiftLeft((7 - counter) * 8));
                 //System.out.println(nextBlock.toString(2));
 
-                if(counter == 3)
+                if(counter == 7)
                 {
                     encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
                     counter = 0;
-                    nextBlock = new BigInteger("0");
+                    nextBlock = BigInteger.ZERO;
                 }
                 else
                     counter++;
@@ -71,7 +72,7 @@ public class FeistelCipher {
         }
 
         // Bit shift logic to check if we have a fragment.  We don't need to pad it because its already zero
-        if(! nextBlock.equals(new BigInteger("0")))
+        if(! nextBlock.equals(BigInteger.ZERO))
             encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
 
         return encodeOut.toString();
@@ -96,14 +97,15 @@ public class FeistelCipher {
 
         // Convert the encrypted big integer back to ascii to put in the output string
         String cryptoChunk = "";
-        BigInteger numberChunk = new BigInteger("0");
-        for(int i = 0; i < 4; i++)
+        BigInteger numberChunk = BigInteger.ZERO;
+        for(int i = 0; i < 8; i++)
         {
-            numberChunk = encryptedAndSwapped.and(BigInteger.valueOf(65535L << ((3 - i) * 16)));
-            cryptoChunk = Character.toString((char)(numberChunk.shiftRight((3 - i) * 16)).intValue());
+            numberChunk = encryptedAndSwapped.and(BigInteger.valueOf(255L << ((7 - i) * 8)));
+            cryptoChunk = Character.toString((char)(numberChunk.shiftRight((7 - i) * 8)).intValue());
             encryptOut.append(cryptoChunk);
         }
 
+        //System.out.println(encryptOut.toString());
         return encryptOut.toString();
     }
 
@@ -122,16 +124,17 @@ public class FeistelCipher {
 
         // Convert the decrypted big integer back to ascii to put in the output string
         String cryptoChunk = "";
-        BigInteger numberChunk = new BigInteger("0");
-        for(int i = 0; i < 4; i++)
+        BigInteger numberChunk = BigInteger.ZERO;
+        for(int i = 0; i < 8; i++)
         {
-            numberChunk = decryptedAndSwapped.and(BigInteger.valueOf(65535L << ((3 - i) * 16)));
-            cryptoChunk = Character.toString((char)(numberChunk.shiftRight((3 - i) * 16)).intValue());
+            numberChunk = decryptedAndSwapped.and(BigInteger.valueOf(255L << ((7 - i) * 8)));
+            cryptoChunk = Character.toString((char)(numberChunk.shiftRight((7 - i) * 8)).intValue());
 
-            if(! numberChunk.equals(new BigInteger("0")))
+            if(! numberChunk.equals(BigInteger.ZERO))
                 decryptOut.append(cryptoChunk);
         }
 
+        //System.out.println(decryptOut.toString());
         return decryptOut.toString();
     }
 }

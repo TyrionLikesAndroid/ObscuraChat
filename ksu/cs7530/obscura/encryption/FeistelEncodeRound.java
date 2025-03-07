@@ -26,7 +26,7 @@ public class FeistelEncodeRound {
         long output = ((long) chunkRE0) << 32L;
         output = output | chunkRE0AfterFAfterXor;
 
-        //System.out.println("Encrypt transform output: " + Long.toBinaryString(output));
+        //System.out.println("Encode transform output: " + Long.toBinaryString(output));
 
         return BigInteger.valueOf(output);
     }
