@@ -13,19 +13,21 @@ public class FeistelEncodeRound {
         this.function = function;
     }
 
-    BigInteger transform(BigInteger input)
+    BigInteger transform(BigInteger input, int iter)
     {
         System.out.println("Encode transform input = " + input.toString(2));
-        BigInteger chunkRE0 = input.and(BigInteger.valueOf(4294967295L));
-        BigInteger chunkLE0 = input.shiftRight(32);
 
-        System.out.println("LE0: " + chunkLE0.toString(2) + " RE0: " + chunkRE0.toString(2));
+        BigInteger rightChunk = input.and(BigInteger.valueOf(4294967295L));
+        BigInteger leftChunk = input.shiftRight(32);
 
-        BigInteger chunkRE0AfterF = function.transform(chunkRE0, roundKey);
-        BigInteger chunkRE0AfterFAfterXor = chunkLE0.xor(chunkRE0AfterF);
+        System.out.println("LE" + iter + ": " + leftChunk.toString(2) +
+                " RE" + iter +": " + rightChunk.toString(2));
 
-        BigInteger output = chunkRE0.shiftLeft( 32);
-        output = output.or(chunkRE0AfterFAfterXor);
+        BigInteger rightChunkAfterFcn = function.transform(rightChunk, roundKey);
+        BigInteger rightChunkAfterXor = leftChunk.xor(rightChunkAfterFcn);
+
+        BigInteger output = rightChunk.shiftLeft( 32);
+        output = output.or(rightChunkAfterXor);
 
         System.out.println("Encode transform output: " + output.toString(2));
 

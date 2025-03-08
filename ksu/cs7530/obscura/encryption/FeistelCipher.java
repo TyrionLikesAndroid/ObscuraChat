@@ -62,9 +62,9 @@ public class FeistelCipher {
 
                 if(counter == 7)
                 {
-                    BigInteger testBlock = new BigInteger("0123456789ABCDEF", 16);
-                    encodeOut.append(encryptFlag ? encryptBlock(testBlock) : decryptBlock(testBlock));
-                    //encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
+                    //BigInteger testBlock = new BigInteger("0123456789ABCDEF", 16);
+                    //encodeOut.append(encryptFlag ? encryptBlock(testBlock) : decryptBlock(testBlock));
+                    encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
                     counter = 0;
                     nextBlock = BigInteger.ZERO;
                 }
@@ -87,8 +87,12 @@ public class FeistelCipher {
         // Perform the initial permutation before handing it to the encryption chain
         BigInteger encrypted = cryptosystem.performInitialPermutation(aBlock);
 
+        int iteration = 0;
         for (FeistelEncodeRound feistelEncodeRound : encryptChain)
-            encrypted = feistelEncodeRound.transform(encrypted);
+        {
+            encrypted = feistelEncodeRound.transform(encrypted, iteration);
+            iteration++;
+        }
 
         // Swap the upper 32 with the lower 32 bits since we are after the last encrypt block
         BigInteger encryptedAndSwapped = (encrypted.and(BigInteger.valueOf(4294967295L)).shiftLeft(32));
@@ -115,14 +119,22 @@ public class FeistelCipher {
     {
         StringBuilder decryptOut = new StringBuilder();
 
-        // We have a whole block at this point, so send it through the decrypt chain
-        BigInteger decrypted = aBlock;
-        for (FeistelEncodeRound feistelDecryptRound : decryptChain)
-            decrypted = feistelDecryptRound.transform(decrypted);
+        // Perform the initial permutation before handing it to the decryption chain
+        BigInteger decrypted = cryptosystem.performInitialPermutation(aBlock);
+
+        int iteration = 0;
+        for (FeistelEncodeRound feistelEncodeRound : encryptChain)
+        {
+            decrypted = feistelEncodeRound.transform(decrypted, iteration);
+            iteration++;
+        }
 
         // Swap the upper 32 with the lower 32 bits since we are after the last decrypt block
         BigInteger decryptedAndSwapped = (decrypted.and(BigInteger.valueOf(4294967295L)).shiftLeft(32));
         decryptedAndSwapped = decryptedAndSwapped.or(decrypted.shiftRight(32));
+
+        // Perform the final permutation to finish the encryption process
+        decryptedAndSwapped = cryptosystem.performFinalPermutation(decryptedAndSwapped);
 
         // Convert the decrypted big integer back to ascii to put in the output string
         String cryptoChunk = "";

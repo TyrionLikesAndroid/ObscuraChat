@@ -41,6 +41,8 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
 
     public BigInteger performInitialPermutation(BigInteger input)
     {
+        //return input;
+
         System.out.println("DES initial permutation input = " + input);
         String binaryInput = padLeadingZerosToFit64(input.toString(2));
         System.out.println("Binary Conversion = " + binaryInput);
@@ -58,21 +60,22 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
 
     public BigInteger performFinalPermutation(BigInteger input)
     {
-        return input;
-//        System.out.println("DES final permutation input = " + input);
-//        String binaryInput = padLeadingZerosToFit64(input.toString(2));
-//        System.out.println("Binary Conversion = " + binaryInput);
-//
-//        // Perform the initial permutation on the input that is already in binary
-//        char[] afterPermutation = new char[64];
-//        for(int i = 0; i < 64; i++)
-//            afterPermutation[i] = binaryInput.charAt(FINAL_PERMUTATION[i] - 1);
-//
-//        String output = new String(afterPermutation);
-//        System.out.println("DES final permutation output = " + output);
-//        System.out.println();
-//
-//        return new BigInteger(output, 2);
+        //return input;
+
+        System.out.println("DES final permutation input = " + input);
+        String binaryInput = padLeadingZerosToFit64(input.toString(2));
+        System.out.println("Binary Conversion = " + binaryInput);
+
+        // Perform the initial permutation on the input that is already in binary
+        char[] afterPermutation = new char[64];
+        for(int i = 0; i < 64; i++)
+            afterPermutation[i] = binaryInput.charAt(FINAL_PERMUTATION[i] - 1);
+
+        String output = new String(afterPermutation);
+        System.out.println("DES final permutation output = " + output);
+        System.out.println();
+
+        return new BigInteger(output, 2);
     }
 
     private String padLeadingZerosToFit64(String binaryString)
