@@ -55,7 +55,7 @@ public class DESFFunction implements FeistelFFunction {
 
     public BigInteger transform(BigInteger input, long key)
     {
-        System.out.println("DES F-function input: " + input.toString(2));
+        //System.out.println("DES F-function input: " + input.toString(2));
 
         BigInteger expansionResult = BigInteger.ZERO;
         BigInteger biKey = BigInteger.valueOf(key);
@@ -122,7 +122,7 @@ public class DESFFunction implements FeistelFFunction {
             }
         }
 
-        System.out.println("DES F-function after permutation = " + permutationResult.toString(2));
+        //System.out.println("DES F-function after permutation = " + permutationResult.toString(2));
 
         return permutationResult;
     }

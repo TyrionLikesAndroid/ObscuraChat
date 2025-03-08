@@ -27,70 +27,59 @@ public class FeistelCipher {
         }
     }
 
-    public String encrypt(String message)
+    public String encrypt(String hexMsg)
     {
-        return encode(message, true);
+        return encode(hexMsg, true);
     }
 
-    public String decrypt(String message)
+    public String decrypt(String hexMsg)
     {
-        return encode(message, false);
+        return encode(hexMsg, false);
     }
 
-    private String encode(String message, boolean encryptFlag)
+    private String encode(String hexMsg, boolean encryptFlag)
     {
         StringBuilder encodeOut = new StringBuilder();
 
-        if (message == null || message.isEmpty())
+        if (hexMsg == null || hexMsg.isEmpty())
             return encodeOut.toString();
 
-        int counter = 0;
         BigInteger nextBlock = BigInteger.ZERO;
+        String binaryMsg = DESCryptosystem.hexToBinary(hexMsg);
 
-        IntStream encodeStream =  message.chars();
-        Iterator<Integer> iter = encodeStream.iterator();
-        while(iter.hasNext())
+        String chunk = null;
+        int chunkSize = 64;
+        for (int i = 0; i < binaryMsg.length(); i += chunkSize)
         {
-            int nextByte = iter.next();
-            //System.out.println(nextByte + " = " + Long.toBinaryString(nextByte));
+            chunk = binaryMsg.substring(i, Math.min(i + chunkSize, binaryMsg.length()));
+            //System.out.println("Chunk: " + chunk);
 
-            if(counter < 8)
+            if(chunk.length() == 64)
             {
-                // Bit shift logic
-                nextBlock = nextBlock.or(new BigInteger(String.valueOf(nextByte)).shiftLeft((7 - counter) * 8));
-                //System.out.println(nextBlock.toString(2));
-
-                if(counter == 7)
-                {
-                    //BigInteger testBlock = new BigInteger("0123456789ABCDEF", 16);
-                    //encodeOut.append(encryptFlag ? encryptBlock(testBlock) : decryptBlock(testBlock));
-                    encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
-                    counter = 0;
-                    nextBlock = BigInteger.ZERO;
-                }
-                else
-                    counter++;
+                nextBlock = new BigInteger(chunk,2);
+                encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
             }
         }
 
-        // Bit shift logic to check if we have a fragment.  We don't need to pad it because its already zero
-        if(! nextBlock.equals(BigInteger.ZERO))
+        // Check to see if we have a fragment.  We need to pad right with zeros if we
+        // hit this case to keep the block size constant
+        if(chunk.length() != 64)
+        {
+            nextBlock = new BigInteger(chunk, 2).shiftLeft(64 - chunk.length());
             encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
-
+        }
         return encodeOut.toString();
     }
 
     private String encryptBlock(BigInteger aBlock)
     {
-        StringBuilder encryptOut = new StringBuilder();
-
         // Perform the initial permutation before handing it to the encryption chain
         BigInteger encrypted = cryptosystem.performInitialPermutation(aBlock);
 
         int iteration = 0;
         for (FeistelEncodeRound feistelEncodeRound : encryptChain)
         {
-            encrypted = feistelEncodeRound.transform(encrypted, iteration);
+            encrypted = feistelEncodeRound.transform(encrypted, iteration, true);
             iteration++;
         }
 
@@ -98,34 +87,25 @@ public class FeistelCipher {
         BigInteger encryptedAndSwapped = (encrypted.and(BigInteger.valueOf(4294967295L)).shiftLeft(32));
         encryptedAndSwapped = encryptedAndSwapped.or(encrypted.shiftRight(32));
 
+        //System.out.println("LE17: " + encrypted.and(BigInteger.valueOf(4294967295L)).toString(2) +
+                //" RE17: " + encrypted.shiftRight(32).toString(2));
+
         // Perform the final permutation to finish the encryption process
         encryptedAndSwapped = cryptosystem.performFinalPermutation(encryptedAndSwapped);
 
-        // Convert the encrypted big integer back to ascii to put in the output string
-        String cryptoChunk = "";
-        BigInteger numberChunk = BigInteger.ZERO;
-        for(int i = 0; i < 8; i++)
-        {
-            numberChunk = encryptedAndSwapped.and(BigInteger.valueOf(255L << ((7 - i) * 8)));
-            cryptoChunk = Character.toString((char)(numberChunk.shiftRight((7 - i) * 8)).intValue());
-            encryptOut.append(cryptoChunk);
-        }
-
-        //System.out.println(encryptOut.toString());
-        return encryptOut.toString();
+        // Convert the encrypted big integer back to hex
+        return DESCryptosystem.padLeadingZerosToFit(encryptedAndSwapped.toString(16), 16);
     }
 
     private String decryptBlock(BigInteger aBlock)
     {
-        StringBuilder decryptOut = new StringBuilder();
-
         // Perform the initial permutation before handing it to the decryption chain
         BigInteger decrypted = cryptosystem.performInitialPermutation(aBlock);
 
         int iteration = 0;
-        for (FeistelEncodeRound feistelEncodeRound : encryptChain)
+        for (FeistelEncodeRound feistelEncodeRound : decryptChain)
         {
-            decrypted = feistelEncodeRound.transform(decrypted, iteration);
+            decrypted = feistelEncodeRound.transform(decrypted, iteration, false);
             iteration++;
         }
 
@@ -133,22 +113,15 @@ public class FeistelCipher {
         BigInteger decryptedAndSwapped = (decrypted.and(BigInteger.valueOf(4294967295L)).shiftLeft(32));
         decryptedAndSwapped = decryptedAndSwapped.or(decrypted.shiftRight(32));
 
+        //System.out.println("LD17: " + decrypted.and(BigInteger.valueOf(4294967295L)).toString(2) +
+              //  " RD17: " + decrypted.shiftRight(32).toString(2));
+
         // Perform the final permutation to finish the encryption process
         decryptedAndSwapped = cryptosystem.performFinalPermutation(decryptedAndSwapped);
 
-        // Convert the decrypted big integer back to ascii to put in the output string
-        String cryptoChunk = "";
-        BigInteger numberChunk = BigInteger.ZERO;
-        for(int i = 0; i < 8; i++)
-        {
-            numberChunk = decryptedAndSwapped.and(BigInteger.valueOf(255L << ((7 - i) * 8)));
-            cryptoChunk = Character.toString((char)(numberChunk.shiftRight((7 - i) * 8)).intValue());
+        // Convert the decrypted big integer back to hex
+        String hexStr = DESCryptosystem.padLeadingZerosToFit(decryptedAndSwapped.toString(16), 16);
 
-            if(! numberChunk.equals(BigInteger.ZERO))
-                decryptOut.append(cryptoChunk);
-        }
-
-        //System.out.println(decryptOut.toString());
-        return decryptOut.toString();
+        return hexStr;
     }
 }

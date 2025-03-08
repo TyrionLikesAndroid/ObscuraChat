@@ -32,20 +32,26 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
 
     public String encrypt(String message)
     {
-        return cipher.encrypt(message);
+        return cipher.encrypt(stringToHex(message));
     }
     public String decrypt(String message)
     {
-        return cipher.decrypt(message);
+        String plainStr = DESCryptosystem.hexToString(cipher.decrypt(message));
+
+        // Trim off any zeros we padded at the end of a partial block
+        while(plainStr.charAt(plainStr.length() - 1) == 0)
+            plainStr = plainStr.substring(0, plainStr.length() - 1);
+
+        return plainStr;
     }
 
     public BigInteger performInitialPermutation(BigInteger input)
     {
         //return input;
 
-        System.out.println("DES initial permutation input = " + input);
-        String binaryInput = padLeadingZerosToFit64(input.toString(2));
-        System.out.println("Binary Conversion = " + binaryInput);
+        //System.out.println("DES initial permutation input = " + input);
+        String binaryInput = padLeadingZerosToFit(input.toString(2), 64);
+        //System.out.println("Binary Conversion = " + binaryInput);
 
         // Perform the initial permutation on the input that is already in binary
         char[] afterPermutation = new char[64];
@@ -53,7 +59,7 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
             afterPermutation[i] = binaryInput.charAt(INITIAL_PERMUTATION[i] - 1);
 
         String output = new String(afterPermutation);
-        System.out.println("DES initial permutation output = " + output);
+        //System.out.println("DES initial permutation output = " + output);
 
         return new BigInteger(output, 2);
     }
@@ -62,9 +68,9 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
     {
         //return input;
 
-        System.out.println("DES final permutation input = " + input);
-        String binaryInput = padLeadingZerosToFit64(input.toString(2));
-        System.out.println("Binary Conversion = " + binaryInput);
+        //System.out.println("DES final permutation input = " + input);
+        String binaryInput = padLeadingZerosToFit(input.toString(2), 64);
+        //System.out.println("Binary Conversion = " + binaryInput);
 
         // Perform the initial permutation on the input that is already in binary
         char[] afterPermutation = new char[64];
@@ -72,30 +78,61 @@ public class DESCryptosystem implements PrivateKeyCryptosystem {
             afterPermutation[i] = binaryInput.charAt(FINAL_PERMUTATION[i] - 1);
 
         String output = new String(afterPermutation);
-        System.out.println("DES final permutation output = " + output);
-        System.out.println();
+        //System.out.println("DES final permutation output = " + output);
+        //System.out.println();
 
         return new BigInteger(output, 2);
     }
 
-    private String padLeadingZerosToFit64(String binaryString)
+    public static String padLeadingZerosToFit(String binaryString, int size)
     {
         StringBuilder output = new StringBuilder(binaryString);
 
-        int padNeeded = 64 - output.length();
+        int padNeeded = size - output.length();
         for(int i = 0; i < padNeeded; i++)
             output.insert(0, "0");
 
         return output.toString();
     }
 
+    public static String stringToHex(String input) {
+        StringBuilder hexString = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            hexString.append(String.format("%02x", (int) c));
+        }
+        return hexString.toString();
+    }
+
+    public static String hexToString(String hex) {
+        StringBuilder output = new StringBuilder();
+        for (int i = 0; i < hex.length(); i += 2) {
+            String str = hex.substring(i, i + 2);
+            output.append((char) Integer.parseInt(str, 16));
+        }
+        return output.toString();
+    }
+
+    public static String hexToBinary(String hex)
+    {
+        StringBuilder binary = new StringBuilder();
+        hex = hex.replace(" ", ""); // Remove spaces if any
+
+        for (char hexChar : hex.toCharArray()) {
+            int decimal = Integer.parseInt(String.valueOf(hexChar), 16);
+            String binaryChunk = String.format("%4s", Integer.toBinaryString(decimal)).replace(' ', '0');
+            binary.append(binaryChunk);
+        }
+
+        return binary.toString();
+    }
+
     public static void main(String[] args)
     {
-        DESCryptosystem crypto = new DESCryptosystem("0123456789ABCDEF");
+        DESCryptosystem crypto = new DESCryptosystem("F33457789BBCDFF1");
         //DESCryptosystem crypto = new DESCryptosystem("FFFFFFFF00000000");
 
-        String plainText = "0123456789ABCDEF";
-        //String plainText = "I pledge allegiance to the flag of the United States of America";
+        //String plainText = "0123456789ABCDEF";
+        String plainText = "I pledge allegiance to the flag of the United States of your momma";
         System.out.println("Original string = " + plainText);
         String encrypted = crypto.encrypt(plainText);
         System.out.println("Encrypted string = " + encrypted);

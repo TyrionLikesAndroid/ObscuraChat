@@ -23,7 +23,7 @@ public class DESKeyFactory implements KeyFactory {
     {
         //System.out.println("DES Key Input = " + hexKey);
 
-        String binaryKey = hexStringToBinary(hexKey);
+        String binaryKey = padZeroToFit(hexStringToBinary(hexKey), 64);
         //System.out.println("Binary Conversion = " + binaryKey);
 
         // Perform the PC1 permutation on the original string form.
@@ -64,8 +64,8 @@ public class DESKeyFactory implements KeyFactory {
         for(int i = 0; i <  SHIFT_TABLE.length; i++)
         {
             // Pad any zeros that might be needed to get us to 28 bits per side
-            joinCWithDRaw = padZeroToFit28(Long.toBinaryString(cArray[i])) +
-                    padZeroToFit28(Long.toBinaryString(dArray[i]));
+            joinCWithDRaw = padZeroToFit(Long.toBinaryString(cArray[i]), 28) +
+                    padZeroToFit(Long.toBinaryString(dArray[i]), 28);
             //System.out.println("Joined C+D = " + joinCWithDRaw);
 
             // Perform the PC2 permutation on the joined string
@@ -107,11 +107,11 @@ public class DESKeyFactory implements KeyFactory {
         return output;
     }
 
-    private String padZeroToFit28(String input)
+    private String padZeroToFit(String input, int length)
     {
         StringBuilder output = new StringBuilder(input);
 
-        int padNeeded = 28 - output.length();
+        int padNeeded = length - output.length();
         for(int i = 0; i < padNeeded; i++)
             output.insert(0, "0");
 

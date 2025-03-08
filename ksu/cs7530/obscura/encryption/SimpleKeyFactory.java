@@ -7,7 +7,7 @@ public class SimpleKeyFactory implements KeyFactory{
         long[] keySchedule = new long[16];
         long root = Long.parseLong(hexKey, 16);
 
-        for(int i = 0; i < 16; i++)
+        for(int i = 0; i < keySchedule.length; i++)
         {
             //System.out.println("Schedule loop[" + i + "] input = " + Long.toBinaryString(root));
             long newKey = root << 1;
