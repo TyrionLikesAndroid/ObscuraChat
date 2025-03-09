@@ -1,5 +1,6 @@
 package ksu.cs7530.obscura.controller;
 
+import ksu.cs7530.obscura.encryption.DESCryptosystem;
 import ksu.cs7530.obscura.model.ChatListener;
 import ksu.cs7530.obscura.model.User;
 
@@ -27,6 +28,9 @@ public class ChatController implements Runnable {
     private User localUser;
     private User remoteUser;
     private String securityMode;
+    private String privateHexKey;
+    private DESCryptosystem cryptosystem;
+    boolean encryptionEnabled = false;
 
     static public ChatController getInstance()
     {
@@ -69,9 +73,10 @@ public class ChatController implements Runnable {
 
     public void sendMessage(String message) {
 
-        if(output != null) {
+        if(output != null)
+        {
             System.out.println("Sending message: " + message);
-            output.println(message);
+            output.println(encryptionEnabled ? cryptosystem.encrypt(message): message);
         }
     }
 
@@ -114,8 +119,15 @@ public class ChatController implements Runnable {
                     // Echo to listener that a remote connection has been established
                     chatListener.chatMessageReceived(User.SYSTEM, "Remote Connection Established");
 
+                    // Verify that the person at the other end is someone we want to chat with
                     if(! verifyRemoteConnection())
                         continue;
+
+                    // Verify that the person at the other end has a compatible security key
+                    if(! verifySecurityCompatibility())
+                    {
+                        continue;
+                    }
 
                     readMessageLoop();
                 }
@@ -140,7 +152,17 @@ public class ChatController implements Runnable {
                 // Send a message to the server
                 chatListener.chatMessageReceived(User.SYSTEM, "Remote Connection Established");
 
+                // Verify that the person at the other end is someone we want to chat with
                 if(! verifyRemoteConnection())
+                {
+                    input.close();
+                    output.close();
+                    clientSocket.close();
+                    return;
+                }
+
+                // Verify that the person at the other end has a compatible security key
+                if(! verifySecurityCompatibility())
                 {
                     input.close();
                     output.close();
@@ -165,7 +187,7 @@ public class ChatController implements Runnable {
             String message;
             while ((message = input.readLine()) != null)
             {
-                chatListener.chatMessageReceived(remoteUser, message);
+                chatListener.chatMessageReceived(remoteUser, encryptionEnabled ? cryptosystem.decrypt(message): message);
             }
 
             System.out.println("Fallen out of read message loop");
@@ -189,14 +211,20 @@ public class ChatController implements Runnable {
             String message = input.readLine();
 
             // Confirm that the protocol is correct for an ObscuraChat client
-            Pattern pattern = Pattern.compile(CHAT_TAG + "[a-zA-Z]+,[a-zA-Z]+" + CHAT_TAG);
+            Pattern pattern = Pattern.compile(CHAT_TAG + "[a-zA-Z0-9_]+,[a-zA-Z0-9_]+" + CHAT_TAG);
             Matcher matcher = pattern.matcher(message);
             if(matcher.matches())
             {
                 int startIndex = CHAT_TAG.length();
-                int endIndex = message.indexOf(",");
-                remoteUser = new User(message.substring(startIndex,endIndex));
-                return chatListener.confirmChatSession(remoteUser);
+                int commaIndex = message.indexOf(",");
+                remoteUser = new User(message.substring(startIndex,commaIndex));
+                String desiredSecurity = message.substring(commaIndex + 1, message.length() - CHAT_TAG.length());
+                return chatListener.confirmChatSession(remoteUser, desiredSecurity);
+            }
+            else
+            {
+                System.out.println("Handshake string didn't match required protocol: " + message);
+                return false;
             }
         }
         catch (IOException ioException)
@@ -205,6 +233,57 @@ public class ChatController implements Runnable {
         }
 
         return out;
+    }
+
+    private boolean verifySecurityCompatibility()
+    {
+        boolean out = true;
+
+        try
+        {
+            // If we have a security mode other than plain, verify our key setup.  This is a blocking call
+            // until we are able to verify both ends otherwise we will just see gibberish
+            if(! securityMode.equals(CHAT_SECURITY_PLAIN))
+            {
+                chatListener.chatMessageReceived(User.SYSTEM, "Verifying security compatibility");
+
+                if(securityMode.equals(CHAT_SECURITY_PRIVATE_KEY))
+                {
+                    System.out.println("Local Hex key is " + privateHexKey);
+
+                    cryptosystem = new DESCryptosystem(privateHexKey);
+                    String privateKeyTest = cryptosystem.encrypt(CHAT_TAG + remoteUser.getName() + CHAT_TAG);
+                    System.out.println("Private key test request - " + privateKeyTest);
+
+                    // Send the private key compatibility string and wait on the response
+                    sendMessage(privateKeyTest);
+
+                    // Wait on the verification response - THIS IS A BLOCKING CALL
+                    String message = input.readLine();
+                    String privateKeyTestResponse = cryptosystem.decrypt(message);
+                    System.out.println("Private key test response - " + privateKeyTestResponse);
+
+                    out = privateKeyTestResponse.equals(CHAT_TAG + localUser.getName() + CHAT_TAG);
+                    if(out)
+                        encryptionEnabled = true;
+                }
+
+                String testResult = out ? "SUCCESS" : "FAILURE";
+                chatListener.chatMessageReceived(User.SYSTEM, "Security compatibility test [" + testResult + "]");
+            }
+        }
+        catch (IOException ioException)
+        {
+            System.out.println("IOException caught in verifySecurityCompatibility: " + ioException.toString());
+            out = false;
+        }
+
+        return out;
+    }
+
+    public void setPrivateKey(final String hexKey)
+    {
+        this.privateHexKey = hexKey;
     }
 
     public static InetAddress getLocalIPAddress()
