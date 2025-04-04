@@ -34,13 +34,13 @@ public class RSAKeyFactory {
 
         if(p.isProbablePrime(100) && q.isProbablePrime(100))
         {
-            System.out.println("p(" + p + ") and q(" + q + ") are highly likely to be prime.");
+            //System.out.println("p(" + p + ") and q(" + q + ") are highly likely to be prime.");
 
             BigInteger n = p.multiply(q);
-            System.out.println("Calculated n(" + n + ")");
+            //System.out.println("Calculated n(" + n + ")");
 
             BigInteger phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
-            System.out.println("Calculated phi(" + phi + ")");
+            //System.out.println("Calculated phi(" + phi + ")");
 
             // Choose 17 for our public key since it's a popular choice
             BigInteger e = new BigInteger("17");
@@ -48,10 +48,10 @@ public class RSAKeyFactory {
             // Calculate e by using Euclid's algorithms
             LinkedList<BigInteger> quotientList = new LinkedList<>();
             BigInteger gcd = euclideanAlgorithm(e, phi, quotientList);
-            System.out.println("GCD(e,phi) = " + gcd);
+            //System.out.println("GCD(e,phi) = " + gcd);
 
             BigInteger invModulus = e.modInverse(phi);
-            System.out.println("Inv Modulus GCD(e,phi) = " + invModulus);
+            //System.out.println("Inv Modulus GCD(e,phi) = " + invModulus);
 
             out.publicKey = e;
             out.privateKey = invModulus;
@@ -89,7 +89,7 @@ public class RSAKeyFactory {
             remainder = values[1];
             quotientList.add(quotient);
 
-            System.out.println("Step(" + step + "): quotient=" + quotient + " remainder=" + remainder);
+            //System.out.println("Step(" + step + "): quotient=" + quotient + " remainder=" + remainder);
 
             a = b;
             b = remainder;
