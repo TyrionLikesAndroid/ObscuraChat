@@ -240,8 +240,6 @@ public class ChatController implements Runnable {
 
     private boolean verifySecurityCompatibility()
     {
-        boolean out = true;
-
         try
         {
             // If we have a security mode other than plain, verify our key setup.  This is a blocking call
@@ -254,21 +252,11 @@ public class ChatController implements Runnable {
                 {
                     System.out.println("Local Hex key is " + privateHexKey);
 
+                    // Create our DES cryptosystem instance now that we know our private key
                     cryptosystem = new DESCryptosystem(privateHexKey);
-                    String privateKeyTest = cryptosystem.encrypt(CHAT_TAG + remoteUser.getName() + CHAT_TAG);
-                    System.out.println("Private key test request - " + privateKeyTest);
 
-                    // Send the private key compatibility string and wait on the response
-                    sendMessage(privateKeyTest);
-
-                    // Wait on the verification response - THIS IS A BLOCKING CALL
-                    String message = input.readLine();
-                    String privateKeyTestResponse = cryptosystem.decrypt(message);
-                    System.out.println("Private key test response - " + privateKeyTestResponse);
-
-                    out = privateKeyTestResponse.equals(CHAT_TAG + localUser.getName() + CHAT_TAG);
-                    if(out)
-                        encryptionEnabled = true;
+                    // Send a test message to make sure we can communicate successfully
+                    encryptionEnabled = sendTestMessage();
                 }
                 else if(securityMode.equals(CHAT_SECURITY_PUBLIC_KEY))
                 {
@@ -307,33 +295,45 @@ public class ChatController implements Runnable {
                     rsaCryptosystem.setRemoteKeyset(new BigInteger(remotePubKey), new BigInteger(remoteNValue));
 
                     // Send a test message to make sure we can communicate successfully
-                    String publicKeyTest = cryptosystem.encrypt(CHAT_TAG + remoteUser.getName() + CHAT_TAG);
-                    System.out.println("Public key test request - " + publicKeyTest);
-
-                    // Send the private key compatibility string and wait on the response
-                    sendMessage(publicKeyTest);
-
-                    // Wait on the verification response - THIS IS A BLOCKING CALL
-                    String cipherMessage = input.readLine();
-                    String publicKeyTestResponse = cryptosystem.decrypt(cipherMessage);
-                    System.out.println("Public key test response - " + publicKeyTestResponse);
-
-                    out = publicKeyTestResponse.equals(CHAT_TAG + localUser.getName() + CHAT_TAG);
-                    if(out)
-                        encryptionEnabled = true;
+                    encryptionEnabled = sendTestMessage();
                 }
 
-                String testResult = out ? "SUCCESS" : "FAILURE";
+                String testResult = encryptionEnabled ? "SUCCESS" : "FAILURE";
                 chatListener.chatMessageReceived(User.SYSTEM, "Security compatibility test [" + testResult + "]");
             }
         }
         catch (IOException ioException)
         {
             System.out.println("IOException caught in verifySecurityCompatibility: " + ioException.toString());
-            out = false;
+            encryptionEnabled = false;
         }
 
-        return out;
+        return encryptionEnabled;
+    }
+
+    private boolean sendTestMessage()
+    {
+        try
+        {
+            // Send a test message to make sure we can communicate successfully
+            String encryptTestMsg = cryptosystem.encrypt(CHAT_TAG + remoteUser.getName() + CHAT_TAG);
+            System.out.println("Encrypt test request - " + encryptTestMsg);
+
+            // Send the private key compatibility string and wait on the response
+            sendMessage(encryptTestMsg);
+
+            // Wait on the verification response - THIS IS A BLOCKING CALL
+            String cipherMessage = input.readLine();
+            String encryptTestResponse = cryptosystem.decrypt(cipherMessage);
+            System.out.println("Encrypt test response - " + encryptTestResponse);
+
+            return encryptTestResponse.equals(CHAT_TAG + localUser.getName() + CHAT_TAG);
+        }
+        catch (IOException ioException)
+        {
+            System.out.println("IOException caught in sendTestMessage: " + ioException.toString());
+            return false;
+        }
     }
 
     public void setPrivateKey(final String hexKey)
