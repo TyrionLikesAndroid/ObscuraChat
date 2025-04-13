@@ -5,20 +5,119 @@ import ksu.cs7530.obscura.model.User;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 public class ChatLoginView extends JFrame{
+
+    // Restrict name and password fields to only support alphabetic characters
+    public static class AlphaTextField extends JTextField {
+
+        public AlphaTextField() {
+            super();
+            addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    char c = e.getKeyChar();
+                    if (!Character.isLetter(c)) {
+                        e.consume(); // Ignore the key press
+                    }
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    // Not needed for this example
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    // Not needed for this example
+                }
+            });
+        }
+
+        public AlphaTextField(int columns) {
+            super(columns);
+            addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    char c = e.getKeyChar();
+                    if (!Character.isLetter(c)) {
+                        e.consume(); // Ignore the key press
+                    }
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    // Not needed for this example
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    // Not needed for this example
+                }
+            });
+        }
+    }
+
+    public static class AlphaPasswordField extends JPasswordField {
+
+        public AlphaPasswordField() {
+            super();
+            addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    char c = e.getKeyChar();
+                    if (!Character.isLetter(c)) {
+                        e.consume(); // Ignore the key press
+                    }
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    // Not needed for this example
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    // Not needed for this example
+                }
+            });
+        }
+
+        public AlphaPasswordField(int columns) {
+            super(columns);
+            addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    char c = e.getKeyChar();
+                    if (!Character.isLetter(c)) {
+                        e.consume(); // Ignore the key press
+                    }
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    // Not needed for this example
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    // Not needed for this example
+                }
+            });
+        }
+    }
+
     private JRadioButton insecurePlaintextRadioButton;
     private JRadioButton securePrivateKey3DESRadioButton;
     private JRadioButton securePublicKeyRSARadioButton;
     private JButton startChatSessionButton;
-    private JTextField nameField;
+    private AlphaTextField nameField;
     private JLabel ObscuraChat;
     private JButton closeButton;
     private JPanel securityPanel;
     private JPanel mainPanel;
-    private JPasswordField passwordField;
+    private AlphaPasswordField passwordField;
     private JButton joinChatButton;
     private ButtonGroup buttonGroup1;
 
@@ -32,6 +131,13 @@ public class ChatLoginView extends JFrame{
     startChatSessionButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+
+            JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(startChatSessionButton);
+            if (parent != null)
+            {
+                if(! verifyNamePasswordPair(parent))
+                    return;
+            }
 
             System.out.println("Start chat session pressed!");
             System.out.println("Username: " + nameField.getText());
@@ -71,11 +177,46 @@ public class ChatLoginView extends JFrame{
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(joinChatButton);
             if (frame != null)
             {
-                createAndShowModalDialog(frame);
+                if(verifyNamePasswordPair(frame))
+                    createAndShowModalDialog(frame);
             }
         }
     });
 
+    }
+
+    private boolean verifyNamePasswordPair(JFrame parent)
+    {
+        boolean out = true;
+
+        String name =  nameField.getText().toLowerCase();
+        String password = new String(passwordField.getPassword()).toLowerCase();
+
+        System.out.println("Name: " + name + " password: " + password);
+
+        // Enforce minimum field length to keep someone from leaving it blank
+        if(name.length() < 4 || password.length() < 4)
+            out = false;
+        else
+        {
+            // Perform simple ROT13 comparison, a shift of 13 letters
+            for (int i = 0; i < name.length(); i++) {
+                // Subtract the ASCII value for lower case 'a' to be zero based
+                int nameChar = name.charAt(i) - 97;
+                int passwordChar = password.charAt(i) - 97;
+
+                if (((nameChar + 13) % 26) != passwordChar) {
+                    out = false;
+                    break;
+                }
+            }
+        }
+
+        // Show a message if they failed verification
+        if(! out)
+            JOptionPane.showMessageDialog(parent, "Incorrect name and password pair.");
+
+        return out;
     }
 
     private void createAndShowModalDialog(JFrame parent) {
