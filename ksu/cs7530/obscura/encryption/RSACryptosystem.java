@@ -1,17 +1,21 @@
 package ksu.cs7530.obscura.encryption;
 
 import java.math.BigInteger;
-import java.security.SecureRandom;
-import java.util.Random;
 
-public class RSACryptosystem {
+public class RSACryptosystem implements Cryptosystem{
 
-    RSAKeyFactory.RSAKeyTriad keys;
+    public RSAKeyFactory.RSAKeyTriad localKeys;
+    public RSAKeyFactory.RSAKeyTriad remoteKeys;
 
-    public RSACryptosystem(RSAKeyFactory.RSAKeyTriad keys)
+    public RSACryptosystem()
     {
-        this.keys = keys;
+        this.localKeys = generateRSAKeyset();
         System.out.println("RSACryptosystem constructed");
+    }
+
+    public void setRemoteKeyset(BigInteger publicKey, BigInteger nValue)
+    {
+        this.remoteKeys = new RSAKeyFactory.RSAKeyTriad(publicKey, BigInteger.ZERO, nValue);
     }
 
     public String encrypt(String message)
@@ -108,7 +112,7 @@ public class RSACryptosystem {
 
     private String encryptBlock(BigInteger msg)
     {
-        BigInteger encrypted = msg.modPow(keys.publicKey, keys.n);
+        BigInteger encrypted = msg.modPow(remoteKeys.publicKey, remoteKeys.n);
         return encrypted.toString(16);
     }
 
@@ -127,31 +131,20 @@ public class RSACryptosystem {
 
     private String decryptBlock(BigInteger msg)
     {
-        BigInteger decrypted = msg.modPow(keys.privateKey, keys.n);
+        BigInteger decrypted = msg.modPow(localKeys.privateKey, localKeys.n);
         return decrypted.toString(16);
     }
 
-    private static BigInteger generatePrimeCandidate()
+    private static RSAKeyFactory.RSAKeyTriad generateRSAKeyset()
     {
-        Random random = new SecureRandom();
-        BigInteger primeCandidate;
-
-        do { primeCandidate = new BigInteger(512, 100, random); }
-        while (! primeCandidate.isProbablePrime(100));
-
-        return primeCandidate;
-    }
-
-    public static void main(String[] args)
-    {
-        BigInteger primeCandidate1 = BigInteger.ZERO;
-        BigInteger primeCandidate2 = BigInteger.ZERO;
+        BigInteger primeCandidate1;
+        BigInteger primeCandidate2;
         RSAKeyFactory.RSAKeyTriad keys = null;
 
         do
         {
-            primeCandidate1 = RSACryptosystem.generatePrimeCandidate();
-            primeCandidate2 = RSACryptosystem.generatePrimeCandidate();
+            primeCandidate1 = RSAKeyFactory.generatePrimeCandidate();
+            primeCandidate2 = RSAKeyFactory.generatePrimeCandidate();
 
             try { keys = new RSAKeyFactory().createRsaKeys(primeCandidate1, primeCandidate2); }
             catch(ArithmeticException e)
@@ -162,8 +155,16 @@ public class RSACryptosystem {
         } while(keys == null);
 
         System.out.println(keys.toString());
+        return keys;
+    }
 
-        RSACryptosystem crypto = new RSACryptosystem(keys);
+    public static void main(String[] args)
+    {
+        // Create an RSA cryptosystem.  This step will make the local keyset on construction
+        RSACryptosystem crypto = new RSACryptosystem();
+
+        // For our self test, make sure both sets are the same since there is no remote end
+        crypto.remoteKeys = crypto.localKeys;
 
         String plainText = "I pledge allegiance to the flag of the United States of your momma";
         System.out.println("Original string = " + plainText);

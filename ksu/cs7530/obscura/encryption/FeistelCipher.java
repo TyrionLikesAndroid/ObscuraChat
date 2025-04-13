@@ -8,9 +8,9 @@ public class FeistelCipher {
 
     private final FeistelEncodeRound[] encryptChain;
     private final FeistelEncodeRound[] decryptChain;
-    private final PrivateKeyCryptosystem cryptosystem;
+    private final DESCryptosystem cryptosystem;
 
-    public FeistelCipher(KeyFactory factory, FeistelFFunction fcn, String hexKey, PrivateKeyCryptosystem cryptosystem)
+    public FeistelCipher(KeyFactory factory, FeistelFFunction fcn, String hexKey, DESCryptosystem cryptosystem)
     {
         long[] keySchedule = factory.createKeySchedule(hexKey);
         this.cryptosystem = cryptosystem;

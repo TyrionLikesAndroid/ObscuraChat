@@ -14,13 +14,11 @@ import java.util.concurrent.Semaphore;
 
 public class ChatConversationView implements ChatListener {
 
-    private User localUser;
+    private final User localUser;
     private JTextArea textArea1;
     private JTextField textField1;
     private JButton quitButton;
     private JButton sendButton;
-    private JButton loadPublicWriteKeyButton;
-    private JButton loadPrivateReadKeyButton;
     JPanel mainPanel;
     Semaphore verifySemaphore = new Semaphore(0);
     boolean verifyResult = false;
@@ -28,12 +26,6 @@ public class ChatConversationView implements ChatListener {
 public ChatConversationView(User localUser, String securityMode, String ipAddress, boolean startAsListener) {
 
     this.localUser = localUser;
-
-    if (securityMode.equals(ChatController.CHAT_SECURITY_PLAIN) || securityMode.equals(ChatController.CHAT_SECURITY_PRIVATE_KEY))
-    {
-        loadPublicWriteKeyButton.setVisible(false);
-        loadPrivateReadKeyButton.setVisible(false);
-    }
 
     textField1.setEnabled(false);
     sendButton.setEnabled(false);
@@ -57,20 +49,6 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
             processLocalChatInput();
         }
     });
-    loadPublicWriteKeyButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-
-            System.out.println("Load public key pressed!");
-        }
-    });
-    loadPrivateReadKeyButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-
-            System.out.println("Load private key pressed!");
-        }
-    });
     textField1.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
@@ -92,6 +70,9 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
     {
         System.out.println("Received chat message event");
         textArea1.append("User[" + aUser.getName() + "]:  " + message + "\n");
+
+        // This will autoscroll when we get more text than the single pane can show
+        textArea1.setCaretPosition(textArea1.getDocument().getLength());
     }
     public void chatSessionEnded(User aUser)
     {

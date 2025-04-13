@@ -1,10 +1,13 @@
 package ksu.cs7530.obscura.controller;
 
+import ksu.cs7530.obscura.encryption.Cryptosystem;
 import ksu.cs7530.obscura.encryption.DESCryptosystem;
+import ksu.cs7530.obscura.encryption.RSACryptosystem;
 import ksu.cs7530.obscura.model.ChatListener;
 import ksu.cs7530.obscura.model.User;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.net.*;
 import java.util.Enumeration;
 import java.util.regex.Matcher;
@@ -29,7 +32,7 @@ public class ChatController implements Runnable {
     private User remoteUser;
     private String securityMode;
     private String privateHexKey;
-    private DESCryptosystem cryptosystem;
+    private Cryptosystem cryptosystem;
     boolean encryptionEnabled = false;
 
     static public ChatController getInstance()
@@ -264,6 +267,58 @@ public class ChatController implements Runnable {
                     System.out.println("Private key test response - " + privateKeyTestResponse);
 
                     out = privateKeyTestResponse.equals(CHAT_TAG + localUser.getName() + CHAT_TAG);
+                    if(out)
+                        encryptionEnabled = true;
+                }
+                else if(securityMode.equals(CHAT_SECURITY_PUBLIC_KEY))
+                {
+                    // Create a key set that we can use for our conversation.  Both sides will need to set up
+                    // their own private keys to have a two-way conversation
+                    RSACryptosystem rsaCryptosystem = new RSACryptosystem();
+                    cryptosystem = rsaCryptosystem;
+
+                    // Send the public key and value of n, the other side will be doing the same
+                    sendMessage(CHAT_TAG + rsaCryptosystem.localKeys.publicKey + "," + rsaCryptosystem.localKeys.n + CHAT_TAG);
+
+                    // Wait on the verification response - THIS IS A BLOCKING CALL
+                    String message = input.readLine();
+                    String remotePubKey;
+                    String remoteNValue;
+
+                    // Read the public key and n from the remote endpoint
+                    Pattern pattern = Pattern.compile(CHAT_TAG + "[A-F0-9]+,[A-F0-9]+" + CHAT_TAG);
+                    Matcher matcher = pattern.matcher(message);
+                    if(matcher.matches())
+                    {
+                        int startIndex = CHAT_TAG.length();
+                        int commaIndex = message.indexOf(",");
+                        remotePubKey = message.substring(startIndex,commaIndex);
+                        remoteNValue = message.substring(commaIndex + 1, message.length() - CHAT_TAG.length());
+
+                        System.out.println("Received remote keyset successfully");
+                    }
+                    else
+                    {
+                        System.out.println("Handshake string didn't match required protocol: " + message);
+                        return false;
+                    }
+
+                    // If we get here, we got a valid set of remote keys so send them to our ChatController
+                    rsaCryptosystem.setRemoteKeyset(new BigInteger(remotePubKey), new BigInteger(remoteNValue));
+
+                    // Send a test message to make sure we can communicate successfully
+                    String publicKeyTest = cryptosystem.encrypt(CHAT_TAG + remoteUser.getName() + CHAT_TAG);
+                    System.out.println("Public key test request - " + publicKeyTest);
+
+                    // Send the private key compatibility string and wait on the response
+                    sendMessage(publicKeyTest);
+
+                    // Wait on the verification response - THIS IS A BLOCKING CALL
+                    String cipherMessage = input.readLine();
+                    String publicKeyTestResponse = cryptosystem.decrypt(cipherMessage);
+                    System.out.println("Public key test response - " + publicKeyTestResponse);
+
+                    out = publicKeyTestResponse.equals(CHAT_TAG + localUser.getName() + CHAT_TAG);
                     if(out)
                         encryptionEnabled = true;
                 }

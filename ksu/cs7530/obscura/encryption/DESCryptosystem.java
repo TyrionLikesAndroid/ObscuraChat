@@ -2,7 +2,7 @@ package ksu.cs7530.obscura.encryption;
 
 import java.math.BigInteger;
 
-public class DESCryptosystem implements PrivateKeyCryptosystem {
+public class DESCryptosystem implements Cryptosystem {
 
     static private final byte[] INITIAL_PERMUTATION = { 58, 50, 42, 34, 26, 18, 10, 2,
                                                         60, 52, 44, 36, 28, 20, 12, 4,

@@ -1,11 +1,13 @@
 package ksu.cs7530.obscura.encryption;
 
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class RSAKeyFactory {
 
-    public class RSAKeyTriad
+    static public class RSAKeyTriad
     {
         public BigInteger publicKey;
         public BigInteger privateKey;
@@ -59,6 +61,17 @@ public class RSAKeyFactory {
         }
 
         return out;
+    }
+
+    public static BigInteger generatePrimeCandidate()
+    {
+        Random random = new SecureRandom();
+        BigInteger primeCandidate;
+
+        do { primeCandidate = new BigInteger(512, 100, random); }
+        while (! primeCandidate.isProbablePrime(100));
+
+        return primeCandidate;
     }
 
     BigInteger euclideanAlgorithm(BigInteger original_a, BigInteger original_b, LinkedList<BigInteger> quotientList)
