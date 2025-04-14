@@ -2,7 +2,7 @@ package ksu.cs7530.obscura.encryption;
 
 import java.math.BigInteger;
 
-public class DESCryptosystem implements Cryptosystem {
+public class DESCryptosystem extends Cryptosystem {
 
     static private final byte[] INITIAL_PERMUTATION = { 58, 50, 42, 34, 26, 18, 10, 2,
                                                         60, 52, 44, 36, 28, 20, 12, 4,
@@ -32,11 +32,13 @@ public class DESCryptosystem implements Cryptosystem {
 
     public String encrypt(String message)
     {
-        return cipher.encrypt(stringToHex(message));
+        String cipherText = cipher.encrypt(stringToHex(message));
+        return super.encrypt(cipherText);
     }
     public String decrypt(String message)
     {
-        String plainStr = DESCryptosystem.hexToString(cipher.decrypt(message));
+        String plainStr = super.decrypt(message);
+        plainStr = DESCryptosystem.hexToString(cipher.decrypt(message));
 
         // Trim off any zeros we padded at the end of a partial block
         while(plainStr.charAt(plainStr.length() - 1) == 0)

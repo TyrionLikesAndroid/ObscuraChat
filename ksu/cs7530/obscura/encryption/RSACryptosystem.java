@@ -2,14 +2,14 @@ package ksu.cs7530.obscura.encryption;
 
 import java.math.BigInteger;
 
-public class RSACryptosystem implements Cryptosystem{
+public class RSACryptosystem extends Cryptosystem{
 
     public RSAKeyFactory.RSAKeyTriad localKeys;
     public RSAKeyFactory.RSAKeyTriad remoteKeys;
 
     public RSACryptosystem()
     {
-        this.localKeys = generateRSAKeyset();
+        this.localKeys = RSAKeyFactory.generateRSAKeyset();
         System.out.println("RSACryptosystem constructed");
     }
 
@@ -20,13 +20,14 @@ public class RSACryptosystem implements Cryptosystem{
 
     public String encrypt(String message)
     {
-        String hexMsg = DESCryptosystem.stringToHex(message);
-        return encodeMessage(hexMsg);
+        String cipherText = encodeMessage(DESCryptosystem.stringToHex(message));
+        return super.encrypt(cipherText);
     }
 
     public String decrypt(String message)
     {
-        String plainStr = DESCryptosystem.hexToString(decodeMessage(message));
+        String plainStr = super.decrypt(message);
+        plainStr = DESCryptosystem.hexToString(decodeMessage(message));
 
         // Trim off any zeros we padded at the end of a partial block
         while(plainStr.charAt(plainStr.length() - 1) == 0)
@@ -133,29 +134,6 @@ public class RSACryptosystem implements Cryptosystem{
     {
         BigInteger decrypted = msg.modPow(localKeys.privateKey, localKeys.n);
         return decrypted.toString(16);
-    }
-
-    private static RSAKeyFactory.RSAKeyTriad generateRSAKeyset()
-    {
-        BigInteger primeCandidate1;
-        BigInteger primeCandidate2;
-        RSAKeyFactory.RSAKeyTriad keys = null;
-
-        do
-        {
-            primeCandidate1 = RSAKeyFactory.generatePrimeCandidate();
-            primeCandidate2 = RSAKeyFactory.generatePrimeCandidate();
-
-            try { keys = new RSAKeyFactory().createRsaKeys(primeCandidate1, primeCandidate2); }
-            catch(ArithmeticException e)
-            {
-                System.out.println("Got a math exception, phi and e are likely not relatively prime, so retry\n");
-            }
-
-        } while(keys == null);
-
-        System.out.println(keys.toString());
-        return keys;
     }
 
     public static void main(String[] args)

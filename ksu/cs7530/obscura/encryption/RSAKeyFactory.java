@@ -30,7 +30,30 @@ public class RSAKeyFactory {
         }
     }
 
-    public RSAKeyTriad createRsaKeys(BigInteger p, BigInteger q)
+    public static RSAKeyFactory.RSAKeyTriad generateRSAKeyset()
+    {
+        BigInteger primeCandidate1;
+        BigInteger primeCandidate2;
+        RSAKeyFactory.RSAKeyTriad keys = null;
+
+        do
+        {
+            primeCandidate1 = RSAKeyFactory.generatePrimeCandidate();
+            primeCandidate2 = RSAKeyFactory.generatePrimeCandidate();
+
+            try { keys = createRsaKeys(primeCandidate1, primeCandidate2); }
+            catch(ArithmeticException e)
+            {
+                System.out.println("Got a math exception, phi and e are likely not relatively prime, so retry\n");
+            }
+
+        } while(keys == null);
+
+        System.out.println(keys.toString());
+        return keys;
+    }
+
+    private static RSAKeyTriad createRsaKeys(BigInteger p, BigInteger q)
     {
         RSAKeyTriad out = new RSAKeyTriad(BigInteger.ZERO, BigInteger.ZERO, BigInteger.ZERO);
 
@@ -63,7 +86,7 @@ public class RSAKeyFactory {
         return out;
     }
 
-    public static BigInteger generatePrimeCandidate()
+    private static BigInteger generatePrimeCandidate()
     {
         Random random = new SecureRandom();
         BigInteger primeCandidate;
@@ -74,7 +97,7 @@ public class RSAKeyFactory {
         return primeCandidate;
     }
 
-    BigInteger euclideanAlgorithm(BigInteger original_a, BigInteger original_b, LinkedList<BigInteger> quotientList)
+    private static BigInteger euclideanAlgorithm(BigInteger original_a, BigInteger original_b, LinkedList<BigInteger> quotientList)
     {
         System.out.println();
         quotientList.clear();
