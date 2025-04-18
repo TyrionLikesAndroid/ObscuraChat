@@ -42,11 +42,21 @@ public class TripleDESCryptosystem extends Cryptosystem {
     {
         TripleDESCryptosystem crypto = new TripleDESCryptosystem("DEADBEEFDEADBEEF0123456789ABCDEFDEAD01234567BEEF");
 
+        //String plainText = Cryptosystem.PERFORMANCE_TEST_MSG;
         String plainText = "I pledge allegiance to the flag of the United States of your momma";
         System.out.println("Original string = " + plainText);
+
+        long startEncrypt = System.currentTimeMillis();
         String encrypted = crypto.encrypt(plainText, false);
+        long encryptTime = System.currentTimeMillis() - startEncrypt;
+
         System.out.println("Encrypted string = " + encrypted);
+
+        long startDecrypt = System.currentTimeMillis();
         String decrypted = crypto.decrypt(encrypted, false);
+        long decryptTime = System.currentTimeMillis() - startDecrypt;
+
         System.out.println("Decrypted string = " + decrypted);
+        System.out.println("3DES Encrypt Time = " + encryptTime + ", Decrypt Time = " + decryptTime);
     }
 }
