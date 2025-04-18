@@ -1,7 +1,5 @@
 package ksu.cs7530.obscura.encryption;
 
-import java.math.BigInteger;
-
 public class TripleDESCryptosystem extends Cryptosystem {
 
     private final DESCryptosystem[] desCrypto = new DESCryptosystem[3];;
@@ -11,12 +9,12 @@ public class TripleDESCryptosystem extends Cryptosystem {
         StringBuilder tripleDESHexKey = new StringBuilder(hexKey);
 
         // If the string is too short, fill out the rest of the length with zero
-        for(int i = hexKey.length(); i < (64 * 3); i++)
+        for(int i = hexKey.length(); i < (16 * 3); i++)
             tripleDESHexKey.append("0");
 
-        desCrypto[0] = new DESCryptosystem(tripleDESHexKey.substring(0, 63));
-        desCrypto[1] = new DESCryptosystem(tripleDESHexKey.substring(64, 127));
-        desCrypto[2] = new DESCryptosystem(tripleDESHexKey.substring(128,191));
+        desCrypto[0] = new DESCryptosystem(tripleDESHexKey.substring(0, 16));
+        desCrypto[1] = new DESCryptosystem(tripleDESHexKey.substring(16, 32));
+        desCrypto[2] = new DESCryptosystem(tripleDESHexKey.substring(32, 48));
 
         System.out.println("TripleDESCryptosystem constructed");
     }
@@ -30,7 +28,7 @@ public class TripleDESCryptosystem extends Cryptosystem {
     public String decrypt(String message, boolean nested)
     {
         String cipherMsg = super.decrypt(message, false);
-        cipherMsg = desCrypto[2].decrypt(desCrypto[1].decrypt(desCrypto[0].decrypt(cipherMsg, true), true), true);
+        cipherMsg = desCrypto[0].decrypt(desCrypto[1].decrypt(desCrypto[2].decrypt(cipherMsg, true), true), true);
         String plainStr = DESCryptosystem.hexToString(cipherMsg);
 
         // Trim off any zeros we padded at the end of a partial block
