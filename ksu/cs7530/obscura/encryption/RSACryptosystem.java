@@ -18,16 +18,16 @@ public class RSACryptosystem extends Cryptosystem{
         this.remoteKeys = new RSAKeyFactory.RSAKeyTriad(publicKey, BigInteger.ZERO, nValue);
     }
 
-    public String encrypt(String message)
+    public String encrypt(String message, boolean nested)
     {
         String cipherText = encodeMessage(DESCryptosystem.stringToHex(message));
-        return super.encrypt(cipherText);
+        return super.encrypt(cipherText, false);
     }
 
-    public String decrypt(String message)
+    public String decrypt(String message, boolean nested)
     {
-        String plainStr = super.decrypt(message);
-        plainStr = DESCryptosystem.hexToString(decodeMessage(message));
+        String cipherMsg = super.decrypt(message, false);
+        String plainStr = DESCryptosystem.hexToString(decodeMessage(cipherMsg));
 
         // Trim off any zeros we padded at the end of a partial block
         while(plainStr.charAt(plainStr.length() - 1) == 0)
@@ -146,9 +146,9 @@ public class RSACryptosystem extends Cryptosystem{
 
         String plainText = "I pledge allegiance to the flag of the United States of your momma";
         System.out.println("Original string = " + plainText);
-        String encrypted = crypto.encrypt(plainText);
+        String encrypted = crypto.encrypt(plainText, false);
         System.out.println("Encrypted string = " + encrypted);
-        String decrypted = crypto.decrypt(encrypted);
+        String decrypted = crypto.decrypt(encrypted, false);
         System.out.println("Decrypted string = " + decrypted);
     }
 }

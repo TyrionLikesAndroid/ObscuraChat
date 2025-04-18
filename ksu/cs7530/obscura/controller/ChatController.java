@@ -79,7 +79,7 @@ public class ChatController implements Runnable {
         if(output != null)
         {
             System.out.println("Sending message: " + message);
-            output.println(encryptionEnabled ? cryptosystem.encrypt(message): message);
+            output.println(encryptionEnabled ? cryptosystem.encrypt(message, false): message);
         }
     }
 
@@ -190,7 +190,7 @@ public class ChatController implements Runnable {
             String message;
             while ((message = input.readLine()) != null)
             {
-                chatListener.chatMessageReceived(remoteUser, encryptionEnabled ? cryptosystem.decrypt(message): message);
+                chatListener.chatMessageReceived(remoteUser, encryptionEnabled ? cryptosystem.decrypt(message, false): message);
             }
 
             System.out.println("Fallen out of read message loop");
@@ -316,7 +316,7 @@ public class ChatController implements Runnable {
         try
         {
             // Send a test message to make sure we can communicate successfully
-            String encryptTestMsg = cryptosystem.encrypt(CHAT_TAG + remoteUser.getName() + CHAT_TAG);
+            String encryptTestMsg = cryptosystem.encrypt(CHAT_TAG + remoteUser.getName() + CHAT_TAG, false);
             System.out.println("Encrypt test request - " + encryptTestMsg);
 
             // Send the private key compatibility string and wait on the response
@@ -324,7 +324,7 @@ public class ChatController implements Runnable {
 
             // Wait on the verification response - THIS IS A BLOCKING CALL
             String cipherMessage = input.readLine();
-            String encryptTestResponse = cryptosystem.decrypt(cipherMessage);
+            String encryptTestResponse = cryptosystem.decrypt(cipherMessage, false);
             System.out.println("Encrypt test response - " + encryptTestResponse);
 
             return encryptTestResponse.equals(CHAT_TAG + localUser.getName() + CHAT_TAG);

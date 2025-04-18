@@ -30,21 +30,37 @@ public class DESCryptosystem extends Cryptosystem {
         System.out.println("DESCryptosystem constructed");
     }
 
-    public String encrypt(String message)
+    public String encrypt(String message, boolean nested)
     {
-        String cipherText = cipher.encrypt(stringToHex(message));
-        return super.encrypt(cipherText);
+        String out = "";
+        if(! nested)
+        {
+            String cipherText = cipher.encrypt(stringToHex(message));
+            out = super.encrypt(cipherText, false);
+        }
+        else
+            out = cipher.encrypt(message);
+
+        return out;
     }
-    public String decrypt(String message)
+    public String decrypt(String message, boolean nested)
     {
-        String plainStr = super.decrypt(message);
-        plainStr = DESCryptosystem.hexToString(cipher.decrypt(message));
+        String out = "";
+        if(! nested)
+        {
+            String cipherMsg = super.decrypt(message, false);
+            String plainStr = DESCryptosystem.hexToString(cipher.decrypt(cipherMsg));
 
-        // Trim off any zeros we padded at the end of a partial block
-        while(plainStr.charAt(plainStr.length() - 1) == 0)
-            plainStr = plainStr.substring(0, plainStr.length() - 1);
+            // Trim off any zeros we padded at the end of a partial block
+            while (plainStr.charAt(plainStr.length() - 1) == 0)
+                plainStr = plainStr.substring(0, plainStr.length() - 1);
 
-        return plainStr;
+            out = plainStr;
+        }
+        else
+            out = cipher.decrypt(message);
+
+        return out;
     }
 
     public BigInteger performInitialPermutation(BigInteger input)
@@ -136,9 +152,9 @@ public class DESCryptosystem extends Cryptosystem {
         //String plainText = "0123456789ABCDEF";
         String plainText = "I pledge allegiance to the flag of the United States of your momma";
         System.out.println("Original string = " + plainText);
-        String encrypted = crypto.encrypt(plainText);
+        String encrypted = crypto.encrypt(plainText, false);
         System.out.println("Encrypted string = " + encrypted);
-        String decrypted = crypto.decrypt(encrypted);
+        String decrypted = crypto.decrypt(encrypted, false);
         System.out.println("Decrypted string = " + decrypted);
     }
 }
