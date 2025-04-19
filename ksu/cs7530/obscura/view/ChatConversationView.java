@@ -1,6 +1,7 @@
 package ksu.cs7530.obscura.view;
 
 import ksu.cs7530.obscura.controller.ChatController;
+import ksu.cs7530.obscura.encryption.Cryptosystem;
 import ksu.cs7530.obscura.model.ChatListener;
 import ksu.cs7530.obscura.model.User;
 
@@ -53,9 +54,9 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
     textField1.setEnabled(false);
     sendButton.setEnabled(false);
 
-    ecbButton.setActionCommand(ChatController.CHAT_OPERATIONAL_MODE_ECB);
-    cbcButton.setActionCommand(ChatController.CHAT_OPERATIONAL_MODE_CBC);
-    ctrButton.setActionCommand(ChatController.CHAT_OPERATIONAL_MODE_CTR);
+    ecbButton.setActionCommand(Cryptosystem.CHAT_OPERATIONAL_MODE_ECB);
+    cbcButton.setActionCommand(Cryptosystem.CHAT_OPERATIONAL_MODE_CBC);
+    ctrButton.setActionCommand(Cryptosystem.CHAT_OPERATIONAL_MODE_CTR);
 
     ecbButton.setEnabled(false);
     cbcButton.setEnabled(false);
@@ -127,9 +128,21 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
         }
     }
 
+    public void chatOperationalModeChange(String mode)
+    {
+        JRadioButton modeButton = ecbButton;
+        if(mode.equals(Cryptosystem.CHAT_OPERATIONAL_MODE_CBC))
+            modeButton = cbcButton;
+        else if(mode.equals(Cryptosystem.CHAT_OPERATIONAL_MODE_CTR))
+            modeButton = ctrButton;
+
+        opModeGroup.setSelected(modeButton.getModel(), true);
+    }
+
     protected void modeButtonSelected(String buttonName)
     {
         System.out.println("Operational Mode " + buttonName + " selected");
+        ChatController.getInstance().changeOperationalMode(buttonName);
     }
 
     public boolean confirmChatSession(User aUser, String security)

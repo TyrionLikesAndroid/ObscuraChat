@@ -1,6 +1,12 @@
 package ksu.cs7530.obscura.encryption;
 
+import java.math.BigInteger;
+
 public class Cryptosystem {
+
+    static public String CHAT_OPERATIONAL_MODE_CBC = "CBC";
+    static public String CHAT_OPERATIONAL_MODE_ECB = "ECB";
+    static public String CHAT_OPERATIONAL_MODE_CTR = "CTR";
 
     // 2K character test string for performance testing
     static public String PERFORMANCE_TEST_MSG =
@@ -30,15 +36,28 @@ public class Cryptosystem {
             "01234567890123456789012345678901234567890123456789012345678901234567890123456789" +
             "01234567890123456789012345678901234567890123456789012345678901234567890123456789";
 
+    private String operationalMode;
+    private String previousMessage;
+
+    public void setOperationalMode(String mode)
+    {
+        System.out.println("Setting operational mode to " + mode);
+        operationalMode = mode;
+    }
+
     public String encrypt(String message, boolean nested)
     {
-        System.out.println("super encrypt called = " + message);
+        int size = message.length();
+        System.out.println("super encrypt called[" + size + "] = " + message);
+
         return message;
     }
 
     public String decrypt(String message, boolean nested)
     {
-        System.out.println("super decrypt called = " + message);
+        int size = message.length();
+        System.out.println("super decrypt called[" + size + "] = " + message);
+
         return message;
     }
 }

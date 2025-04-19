@@ -19,9 +19,6 @@ public class ChatController implements Runnable {
     static public String CHAT_SECURITY_PLAIN = "PLAIN";
     static public String CHAT_SECURITY_PRIVATE_KEY = "PRIVATE_KEY";
     static public String CHAT_SECURITY_PUBLIC_KEY = "PUBLIC_KEY";
-    static public String CHAT_OPERATIONAL_MODE_CBC = "CBC";
-    static public String CHAT_OPERATIONAL_MODE_ECB = "ECB";
-    static public String CHAT_OPERATIONAL_MODE_CTR = "CTR";
     static public String CHAT_TAG = "<OBSCURA_CHAT>";
     static private final int PORT = 53737;
 
@@ -193,9 +190,23 @@ public class ChatController implements Runnable {
         {
             // Read messages from the client constantly until the connection is dropped
             String message;
+            String plainMessage;
             while ((message = input.readLine()) != null)
             {
-                chatListener.chatMessageReceived(remoteUser, encryptionEnabled ? cryptosystem.decrypt(message, false): message);
+                plainMessage = encryptionEnabled ? cryptosystem.decrypt(message, false): message;
+
+                // See if this is a control message or a normal payload message
+                Pattern pattern = Pattern.compile(CHAT_TAG + "(ECB|CBC|CTR)" + CHAT_TAG);
+                Matcher matcher = pattern.matcher(plainMessage);
+                if(matcher.matches())
+                {
+                    String mode = plainMessage.substring(CHAT_TAG.length(), plainMessage.length() - CHAT_TAG.length());
+                    chatListener.chatOperationalModeChange(mode);
+                    cryptosystem.setOperationalMode(mode);
+                    chatListener.chatMessageReceived(remoteUser, "Changing operational mode to [" + mode + "]");
+                }
+                else
+                    chatListener.chatMessageReceived(remoteUser, plainMessage);
             }
 
             System.out.println("Fallen out of read message loop");
@@ -305,6 +316,7 @@ public class ChatController implements Runnable {
                 }
 
                 out = encryptionEnabled;
+                cryptosystem.setOperationalMode(Cryptosystem.CHAT_OPERATIONAL_MODE_ECB);
                 String testResult = encryptionEnabled ? "SUCCESS" : "FAILURE";
                 chatListener.chatMessageReceived(User.SYSTEM, "Security compatibility test [" + testResult + "]");
             }
@@ -321,6 +333,17 @@ public class ChatController implements Runnable {
         }
 
         return out;
+    }
+
+    public void changeOperationalMode(String mode)
+    {
+        chatListener.chatMessageReceived(localUser, "Changing operational mode to [" + mode + "]");
+
+        // Send the new operational mode in the normal message band
+        sendMessage(CHAT_TAG + mode + CHAT_TAG);
+
+        // Tell the cryptosystem to change operational mode, both sides will do it automatically
+        cryptosystem.setOperationalMode(mode);
     }
 
     private boolean sendTestMessage()
