@@ -69,16 +69,33 @@ public class FeistelCipher {
             if(encryptFlag)
                 cbcChunk = cryptosystem.cbcTransform(paddedChunk, false, 2);
 
+            // Next payload block to be encrypted
             nextBlock = new BigInteger(cbcChunk,2);
-            String encodeChunk = encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock);
 
-            // CBC mode hook
-            if(encryptFlag)
-                cryptosystem.setPreviousOut(new BigInteger(encodeChunk, 16).toString(2));
+            // CTR mode logic
+            String encodeChunk;
+            if(cryptosystem.operationalMode.equals(Cryptosystem.CHAT_OPERATIONAL_MODE_CTR))
+            {
+                String ctr = cryptosystem.ctrNextCounter(chunkSize, 2, ! encryptFlag);
+
+                BigInteger ctrBlock = new BigInteger(ctr,2);
+                String ctrEncoded = encryptBlock(ctrBlock);
+
+                encodeChunk = (nextBlock.xor(new BigInteger(ctrEncoded, 16))).toString(16);
+                encodeChunk = DESCryptosystem.padLeadingZerosToFit(encodeChunk,16);
+            }
             else
             {
-                encodeChunk = cryptosystem.cbcTransform(encodeChunk, true, 16);
-                cryptosystem.setPreviousIn(new BigInteger(paddedChunk, 2).toString(16));
+                encodeChunk = encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock);
+
+                // CBC mode hook
+                if(encryptFlag)
+                    cryptosystem.setPreviousOut(new BigInteger(encodeChunk, 16).toString(2));
+                else
+                {
+                    encodeChunk = cryptosystem.cbcTransform(encodeChunk, true, 16);
+                    cryptosystem.setPreviousIn(new BigInteger(paddedChunk, 2).toString(16));
+                }
             }
 
             encodeOut.append(encodeChunk);

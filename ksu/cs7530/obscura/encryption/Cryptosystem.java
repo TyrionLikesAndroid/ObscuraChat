@@ -40,6 +40,8 @@ public class Cryptosystem {
     protected String operationalMode = CHAT_OPERATIONAL_MODE_ECB;
     private String previousOut = null;
     private String previousIn = null;
+    private final Random ctrInRandom = new Random(7867787L);
+    private final Random ctrOutRandom = new Random(7867787L);
 
     public void setPreviousOut(String str)
     {
@@ -168,5 +170,19 @@ public class Cryptosystem {
             }
             return new BigInteger(builder.toString(), radix);
         }
+    }
+
+    public String ctrNextCounter(int length, int radix, boolean inFlag)
+    {
+        Random random = inFlag ? ctrInRandom : ctrOutRandom;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++)
+        {
+            int randomByte = random.nextInt(radix); // Get a random value between 0 and radix
+            String randomStr = (radix == 2) ? Integer.toString(randomByte) : Integer.toHexString(randomByte);
+            sb.append(randomStr);
+        }
+        //System.out.println("ctr[" + inFlag + "] =" + sb);
+        return sb.toString();
     }
 }
