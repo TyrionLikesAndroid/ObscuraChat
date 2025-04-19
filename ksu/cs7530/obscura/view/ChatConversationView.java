@@ -164,7 +164,7 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
         if(! textField1.getText().isEmpty())
         {
             System.out.println("Send message to remote user");
-            textArea1.append("User[" + localUser.getName() + "]: " + textField1.getText() + "\n");
+            textArea1.append("User[" + localUser.getName() + "]:  " + textField1.getText() + "\n");
             ChatController.getInstance().sendMessage(textField1.getText());
             textField1.setText("");
         }
