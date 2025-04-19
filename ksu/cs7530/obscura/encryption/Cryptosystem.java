@@ -46,17 +46,17 @@ public class Cryptosystem {
     public void setPreviousOut(String str)
     {
         this.previousOut = str;
-        boolean isBinary = str.matches("[01]+");
-        String hexStr = isBinary ? new BigInteger(str,2).toString(16) : str;
-        System.out.println("Setting previousOut = " + hexStr);
+        //boolean isBinary = str.matches("[01]+");
+        //String hexStr = isBinary ? new BigInteger(str,2).toString(16) : str;
+        //System.out.println("Setting previousOut = " + hexStr);
     }
 
     public void setPreviousIn(String str)
     {
         this.previousIn = str;
-        boolean isBinary = str.matches("[01]+");
-        String hexStr = isBinary ? new BigInteger(str,2).toString(16) : str;
-        System.out.println("Setting previousIn = " + hexStr);
+        //boolean isBinary = str.matches("[01]+");
+        //String hexStr = isBinary ? new BigInteger(str,2).toString(16) : str;
+        //System.out.println("Setting previousIn = " + hexStr);
     }
 
     public void setOperationalMode(String mode)

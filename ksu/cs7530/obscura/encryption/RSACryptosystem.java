@@ -64,12 +64,29 @@ public class RSACryptosystem extends Cryptosystem{
             String cbcChunk = cbcTransform(paddedChunk, false, 16);
 
             nextBlock = new BigInteger(cbcChunk,16);
-            encryptedChunk = encryptBlock(nextBlock);
-            //System.out.println("Encrypted Chunk(" + encryptedChunk.length() + "): " + encryptedChunk);
 
-            String paddedEncryptChunk = padEncryptionIfNeeded(encryptedChunk);
-            setPreviousOut(paddedEncryptChunk);
-            encodeOut.append(paddedEncryptChunk);
+            // CTR mode logic
+            String encodeChunk;
+            if(operationalMode.equals(Cryptosystem.CHAT_OPERATIONAL_MODE_CTR))
+            {
+                String ctr = ctrNextCounter(chunkSize, 16, false);
+
+                BigInteger ctrBlock = new BigInteger(ctr,16);
+                String ctrEncoded = encryptBlock(ctrBlock);
+
+                encodeChunk = (nextBlock.xor(new BigInteger(ctrEncoded, 16))).toString(16);
+                encodeChunk = padEncryptionIfNeeded(encodeChunk);
+            }
+            else
+            {
+                encryptedChunk = encryptBlock(nextBlock);
+                //System.out.println("Encrypted Chunk(" + encryptedChunk.length() + "): " + encryptedChunk);
+
+                encodeChunk = padEncryptionIfNeeded(encryptedChunk);
+                setPreviousOut(encodeChunk);
+            }
+
+            encodeOut.append(encodeChunk);
         }
 
         return encodeOut.toString();
@@ -88,19 +105,32 @@ public class RSACryptosystem extends Cryptosystem{
         for (int i = 0; i < hexMsg.length(); i += chunkSize)
         {
             chunk = hexMsg.substring(i, Math.min(i + chunkSize, hexMsg.length()));
-            //System.out.println("Chunk: " + chunk);
 
             if(chunk.length() == chunkSize)
             {
                 nextBlock = new BigInteger(chunk,16);
-                String tmp1 = decryptBlock(nextBlock);
-                //System.out.println("Decrypted Chunk(" + tmp1.length() + "): " + tmp1);
 
-                // operational mode hook
-                String omChunk = cbcTransform(tmp1, true, 16);
-                setPreviousIn(chunk);
+                // CTR mode logic
+                String encodeChunk;
+                if(operationalMode.equals(Cryptosystem.CHAT_OPERATIONAL_MODE_CTR))
+                {
+                    String ctr = ctrNextCounter(60, 16, true);
 
-                decodeOut.append(omChunk);
+                    BigInteger ctrBlock = new BigInteger(ctr,16);
+                    String ctrEncoded = encryptBlock(ctrBlock);
+
+                    encodeChunk = (nextBlock.xor(new BigInteger(ctrEncoded, 16))).toString(16);
+                }
+                else
+                {
+                    encodeChunk = decryptBlock(nextBlock);
+
+                    // operational mode hook
+                    encodeChunk = cbcTransform(encodeChunk, true, 16);
+                    setPreviousIn(chunk);
+                }
+
+                decodeOut.append(encodeChunk);
             }
         }
 
