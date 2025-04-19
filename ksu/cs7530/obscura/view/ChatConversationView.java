@@ -86,7 +86,7 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
         public void keyPressed(KeyEvent e) {
             super.keyPressed(e);
 
-            System.out.println("Keyboard pressed from text field!");
+            //System.out.println("Keyboard pressed from text field!");
             if (e.getKeyCode() == KeyEvent.VK_ENTER)
                 processLocalChatInput();
         }

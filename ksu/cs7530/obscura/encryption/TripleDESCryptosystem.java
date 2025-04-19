@@ -19,16 +19,20 @@ public class TripleDESCryptosystem extends Cryptosystem {
         System.out.println("TripleDESCryptosystem constructed");
     }
 
+    protected void postOpModeChange()
+    {
+        // Set the operational mode on the first crypto instance
+        desCrypto[0].setOperationalMode(operationalMode);
+    }
+
     public String encrypt(String message, boolean nested)
     {
         String plainToHex = DESCryptosystem.stringToHex(message);
-        String cipherText = desCrypto[2].encrypt(desCrypto[1].encrypt(desCrypto[0].encrypt(plainToHex, true), true), true);
-        return super.encrypt(cipherText, false);
+        return desCrypto[2].encrypt(desCrypto[1].encrypt(desCrypto[0].encrypt(plainToHex, true), true), true);
     }
     public String decrypt(String message, boolean nested)
     {
-        String cipherMsg = super.decrypt(message, false);
-        cipherMsg = desCrypto[0].decrypt(desCrypto[1].decrypt(desCrypto[2].decrypt(cipherMsg, true), true), true);
+        String cipherMsg = desCrypto[0].decrypt(desCrypto[1].decrypt(desCrypto[2].decrypt(message, true), true), true);
         String plainStr = DESCryptosystem.hexToString(cipherMsg);
 
         // Trim off any zeros we padded at the end of a partial block

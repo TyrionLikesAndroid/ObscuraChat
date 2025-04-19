@@ -54,20 +54,36 @@ public class FeistelCipher {
             chunk = binaryMsg.substring(i, Math.min(i + chunkSize, binaryMsg.length()));
             //System.out.println("Chunk: " + chunk);
 
-            if(chunk.length() == 64)
+            // Check to see if we have a fragment.  Pad right with zeros to keep the block size constant
+            String paddedChunk = chunk;
+            if(chunk.length() != chunkSize)
             {
-                nextBlock = new BigInteger(chunk,2);
-                encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
+                StringBuilder paddedString = new StringBuilder(chunk);
+                for (int j = 0; j < chunkSize - chunk.length(); j++)
+                    paddedString.append('0');
+                paddedChunk = paddedString.toString();
             }
+
+            // CBC mode hook
+            String cbcChunk = paddedChunk;
+            if(encryptFlag)
+                cbcChunk = cryptosystem.cbcTransform(paddedChunk, false, 2);
+
+            nextBlock = new BigInteger(cbcChunk,2);
+            String encodeChunk = encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock);
+
+            // CBC mode hook
+            if(encryptFlag)
+                cryptosystem.setPreviousOut(new BigInteger(encodeChunk, 16).toString(2));
+            else
+            {
+                encodeChunk = cryptosystem.cbcTransform(encodeChunk, true, 16);
+                cryptosystem.setPreviousIn(new BigInteger(paddedChunk, 2).toString(16));
+            }
+
+            encodeOut.append(encodeChunk);
         }
 
-        // Check to see if we have a fragment.  We need to pad right with zeros if we
-        // hit this case to keep the block size constant
-        if(chunk.length() != 64)
-        {
-            nextBlock = new BigInteger(chunk, 2).shiftLeft(64 - chunk.length());
-            encodeOut.append(encryptFlag ? encryptBlock(nextBlock) : decryptBlock(nextBlock));
-        }
         return encodeOut.toString();
     }
 

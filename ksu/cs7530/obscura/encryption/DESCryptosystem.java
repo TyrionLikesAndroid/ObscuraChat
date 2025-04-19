@@ -32,24 +32,19 @@ public class DESCryptosystem extends Cryptosystem {
 
     public String encrypt(String message, boolean nested)
     {
-        String out = "";
+        String msg = message;
         if(! nested)
-        {
-            String cipherText = cipher.encrypt(stringToHex(message));
-            out = super.encrypt(cipherText, false);
-        }
-        else
-            out = cipher.encrypt(message);
+            msg = stringToHex(message);
 
-        return out;
+        return cipher.encrypt(msg);
     }
+
     public String decrypt(String message, boolean nested)
     {
-        String out = "";
+        String out;
         if(! nested)
         {
-            String cipherMsg = super.decrypt(message, false);
-            String plainStr = DESCryptosystem.hexToString(cipher.decrypt(cipherMsg));
+            String plainStr = DESCryptosystem.hexToString(cipher.decrypt(message));
 
             // Trim off any zeros we padded at the end of a partial block
             while (plainStr.charAt(plainStr.length() - 1) == 0)

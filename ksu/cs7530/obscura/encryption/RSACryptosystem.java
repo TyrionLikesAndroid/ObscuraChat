@@ -50,37 +50,26 @@ public class RSACryptosystem extends Cryptosystem{
             chunk = hexMsg.substring(i, Math.min(i + chunkSize, hexMsg.length()));
             //System.out.println("Chunk: " + chunk);
 
-            if(chunk.length() == chunkSize)
+            // Check to see if we have a fragment.  Pad right with zeros to keep the block size constant
+            String paddedChunk = chunk;
+            if(chunk.length() != chunkSize)
             {
-                // operational mode hook
-                chunk = plainChunkOperation(chunk, false);
-
-                nextBlock = new BigInteger(chunk,16);
-                encryptedChunk = encryptBlock(nextBlock);
-                //System.out.println("Encrypted Chunk(" + encryptedChunk.length() + "): " + encryptedChunk);
-
-                previousOut = padEncryptionIfNeeded(encryptedChunk);
-                encodeOut.append(previousOut);
+                StringBuilder paddedString = new StringBuilder(chunk);
+                for (int j = 0; j < chunkSize - chunk.length(); j++)
+                    paddedString.append('0');
+                paddedChunk = paddedString.toString();
             }
-        }
-
-        // Check to see if we have a fragment.  We need to pad right with zeros if we
-        // hit this case to keep the block size constant
-        if(chunk.length() != chunkSize)
-        {
-            StringBuilder paddedString = new StringBuilder(chunk);
-            for (int i = 0; i < chunkSize - chunk.length(); i++)
-                paddedString.append('0');
 
             // operational mode hook
-            String paddedChunk = plainChunkOperation(paddedString.toString(), false);
+            String cbcChunk = cbcTransform(paddedChunk, false, 16);
 
-            nextBlock = new BigInteger(paddedChunk, 16);
+            nextBlock = new BigInteger(cbcChunk,16);
             encryptedChunk = encryptBlock(nextBlock);
             //System.out.println("Encrypted Chunk(" + encryptedChunk.length() + "): " + encryptedChunk);
 
-            previousOut = padEncryptionIfNeeded(encryptedChunk);;
-            encodeOut.append(previousOut);
+            String paddedEncryptChunk = padEncryptionIfNeeded(encryptedChunk);
+            setPreviousOut(paddedEncryptChunk);
+            encodeOut.append(paddedEncryptChunk);
         }
 
         return encodeOut.toString();
@@ -108,8 +97,9 @@ public class RSACryptosystem extends Cryptosystem{
                 //System.out.println("Decrypted Chunk(" + tmp1.length() + "): " + tmp1);
 
                 // operational mode hook
-                String omChunk = plainChunkOperation(tmp1, true);
-                previousIn = hexMsg;
+                String omChunk = cbcTransform(tmp1, true, 16);
+                setPreviousIn(chunk);
+
                 decodeOut.append(omChunk);
             }
         }
