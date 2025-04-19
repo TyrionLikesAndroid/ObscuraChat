@@ -1,8 +1,8 @@
 package ksu.cs7530.obscura.controller;
 
 import ksu.cs7530.obscura.encryption.Cryptosystem;
-import ksu.cs7530.obscura.encryption.DESCryptosystem;
 import ksu.cs7530.obscura.encryption.RSACryptosystem;
+import ksu.cs7530.obscura.encryption.TripleDESCryptosystem;
 import ksu.cs7530.obscura.model.ChatListener;
 import ksu.cs7530.obscura.model.User;
 
@@ -19,6 +19,9 @@ public class ChatController implements Runnable {
     static public String CHAT_SECURITY_PLAIN = "PLAIN";
     static public String CHAT_SECURITY_PRIVATE_KEY = "PRIVATE_KEY";
     static public String CHAT_SECURITY_PUBLIC_KEY = "PUBLIC_KEY";
+    static public String CHAT_OPERATIONAL_MODE_CBC = "CBC";
+    static public String CHAT_OPERATIONAL_MODE_ECB = "ECB";
+    static public String CHAT_OPERATIONAL_MODE_CTR = "CTR";
     static public String CHAT_TAG = "<OBSCURA_CHAT>";
     static private final int PORT = 53737;
 
@@ -184,6 +187,8 @@ public class ChatController implements Runnable {
 
     private void readMessageLoop()
     {
+        System.out.println("Starting read message loop");
+
         try
         {
             // Read messages from the client constantly until the connection is dropped
@@ -240,6 +245,7 @@ public class ChatController implements Runnable {
 
     private boolean verifySecurityCompatibility()
     {
+        boolean out = true;
         try
         {
             // If we have a security mode other than plain, verify our key setup.  This is a blocking call
@@ -253,7 +259,7 @@ public class ChatController implements Runnable {
                     System.out.println("Local Hex key is " + privateHexKey);
 
                     // Create our DES cryptosystem instance now that we know our private key
-                    cryptosystem = new DESCryptosystem(privateHexKey);
+                    cryptosystem = new TripleDESCryptosystem(privateHexKey);
 
                     // Send a test message to make sure we can communicate successfully
                     encryptionEnabled = sendTestMessage();
@@ -298,17 +304,23 @@ public class ChatController implements Runnable {
                     encryptionEnabled = sendTestMessage();
                 }
 
+                out = encryptionEnabled;
                 String testResult = encryptionEnabled ? "SUCCESS" : "FAILURE";
                 chatListener.chatMessageReceived(User.SYSTEM, "Security compatibility test [" + testResult + "]");
             }
+
+            // Any condition where our output is true is a session start (plain text or good security handshake)
+            if(out)
+                chatListener.chatSessionStarted(securityMode);
         }
         catch (IOException ioException)
         {
             System.out.println("IOException caught in verifySecurityCompatibility: " + ioException.toString());
             encryptionEnabled = false;
+            out = false;
         }
 
-        return encryptionEnabled;
+        return out;
     }
 
     private boolean sendTestMessage()

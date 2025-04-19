@@ -20,8 +20,31 @@ public class ChatConversationView implements ChatListener {
     private JButton quitButton;
     private JButton sendButton;
     JPanel mainPanel;
+    private JPanel modePanel;
+    private JLabel modeLabel;
+    private JRadioButton ecbButton;
+    private JRadioButton cbcButton;
+    private JRadioButton ctrButton;
+    private ButtonGroup opModeGroup;
     Semaphore verifySemaphore = new Semaphore(0);
     boolean verifyResult = false;
+
+    static class ModeButtonListener implements ActionListener {
+
+        private final ChatConversationView view;
+
+        public ModeButtonListener(ChatConversationView view)
+        {
+            super();
+            this.view = view;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JRadioButton source = (JRadioButton) e.getSource();
+            view.modeButtonSelected(source.getText());
+        }
+    }
 
 public ChatConversationView(User localUser, String securityMode, String ipAddress, boolean startAsListener) {
 
@@ -29,6 +52,14 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
 
     textField1.setEnabled(false);
     sendButton.setEnabled(false);
+
+    ecbButton.setActionCommand(ChatController.CHAT_OPERATIONAL_MODE_ECB);
+    cbcButton.setActionCommand(ChatController.CHAT_OPERATIONAL_MODE_CBC);
+    ctrButton.setActionCommand(ChatController.CHAT_OPERATIONAL_MODE_CTR);
+
+    ecbButton.setEnabled(false);
+    cbcButton.setEnabled(false);
+    ctrButton.setEnabled(false);
 
     quitButton.addActionListener(new ActionListener() {
         @Override
@@ -77,6 +108,28 @@ public ChatConversationView(User localUser, String securityMode, String ipAddres
     public void chatSessionEnded(User aUser)
     {
         System.out.println("Received session ended event");
+    }
+
+    public void chatSessionStarted(String security)
+    {
+        if(! security.equals(ChatController.CHAT_SECURITY_PLAIN))
+        {
+            ecbButton.setEnabled(true);
+            cbcButton.setEnabled(true);
+            ctrButton.setEnabled(true);
+
+            // Add an ActionListener to each radio button
+            ecbButton.addActionListener(new ModeButtonListener(this));
+            cbcButton.addActionListener(new ModeButtonListener(this));
+            ctrButton.addActionListener(new ModeButtonListener(this));
+
+            opModeGroup.setSelected(ecbButton.getModel(), true);
+        }
+    }
+
+    protected void modeButtonSelected(String buttonName)
+    {
+        System.out.println("Operational Mode " + buttonName + " selected");
     }
 
     public boolean confirmChatSession(User aUser, String security)
