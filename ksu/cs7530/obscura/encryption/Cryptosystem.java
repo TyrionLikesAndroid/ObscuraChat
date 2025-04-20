@@ -105,16 +105,16 @@ public class Cryptosystem {
             String cbcChunk = inFlag ? previousIn : previousOut;
 
             BigInteger numChunk = new BigInteger(chunk, radix);
-            System.out.println("chunk = " + numChunk.toString(16));
+            //System.out.println("chunk = " + numChunk.toString(16));
 
             BigInteger cbcNum = getCBCNumber(chunk.length(), cbcChunk, radix);
-            System.out.println("cbcChunk = " + cbcNum.toString(16));
+            //System.out.println("cbcChunk = " + cbcNum.toString(16));
 
             BigInteger xform = numChunk.xor(cbcNum);
-            System.out.println("xform = " + xform.toString(16));
+            //System.out.println("xform = " + xform.toString(16));
 
-            if(inFlag)
-                System.out.println("plain = " + DESCryptosystem.hexToString(xform.toString(16)));
+            //if(inFlag)
+                //System.out.println("plain = " + DESCryptosystem.hexToString(xform.toString(16)));
 
             return xform.toString(radix);
         }
@@ -127,9 +127,9 @@ public class Cryptosystem {
         // Just for debugging
         if(paddedChunk != null)
         {
-            boolean isBinary = cbcChunk.matches("[01]+");
-            String hexStr = isBinary ? new BigInteger(cbcChunk, 2).toString(16) : cbcChunk;
-            System.out.println("len=" + length + ", cbcChunk=" + hexStr + ", radix=" + radix);
+            //boolean isBinary = cbcChunk.matches("[01]+");
+            //String hexStr = isBinary ? new BigInteger(cbcChunk, 2).toString(16) : cbcChunk;
+            //System.out.println("len=" + length + ", cbcChunk=" + hexStr + ", radix=" + radix);
 
             paddedChunk = DESCryptosystem.padLeadingZerosToFit(cbcChunk,length);
         }
@@ -143,22 +143,22 @@ public class Cryptosystem {
                 int randomByte = random.nextInt(16); // Get a random value between 0 and 15
                 sb.append(Integer.toHexString(randomByte));
             }
-            System.out.println("nonce=" + sb);
+            //System.out.println("nonce=" + sb);
             return new BigInteger(sb.toString(), 16);
         }
         else if(paddedChunk.length() == length)
         {
-            System.out.println("got here 1");
+            //System.out.println("got here 1");
             return new BigInteger(paddedChunk, radix);
         }
         else if(paddedChunk.length() > length)
         {
-            System.out.println("got here 2");
+            //System.out.println("got here 2");
             return new BigInteger(paddedChunk.substring(1, length), radix);
         }
         else
         {
-            System.out.println("got here 3");
+            //System.out.println("got here 3");
 
             StringBuilder builder = new StringBuilder();
             builder.append(paddedChunk);
